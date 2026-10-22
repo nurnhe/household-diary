@@ -408,7 +408,7 @@ function choreRow(c) {
   return `<li class="${d ? "done" : ""}"><label class="step">
     <input type="checkbox" data-act="tick" data-id="${c.id}"${d ? " checked" : ""} aria-label="${esc(c.name)}">
     ${thumb(c, "chore", 40)}<span class="txt"><span class="nm">${esc(c.name)}</span><span class="sub">${sub}</span></span></label>
-    ${d ? "" : `<button class="skip-btn" data-act="later" data-id="${c.id}">Tomorrow</button>`}</li>`;
+    ${d ? "" : `<button class="skip-btn" data-act="later" data-id="${c.id}" title="Move this chore to tomorrow">Not today</button>`}</li>`;
 }
 function renderToday() {
   const k = todayKey(), d = fromKey(k), list = todayList(), doneN = list.filter(doneToday).length;
