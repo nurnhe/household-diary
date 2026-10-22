@@ -379,8 +379,21 @@ function loadLocal() {
   try { data = JSON.parse(localStorage.getItem(LKEY) || "{}") } catch (e) {}
   state.chores = data.chores || {}; state.supplies = data.supplies || {}; state.shopping = data.shopping || {};
   state.loaded = true; state.mode = "local";
+  addFiltersAndBrushHeads();
   setStatus("Your household diary is saved in this browser on this device.");
   render();
+}
+/* One-off for KK's phone (asked 2026-10-22): water filter and toothbrush head, with the dates they were last changed.
+   Only for a diary started from the starter list, only while the dates are still fresh, and only once. */
+function addFiltersAndBrushHeads() {
+  const KEY = "household-diary-filters-added";
+  try { if (localStorage.getItem(KEY) || todayKey() > "2026-11-05" || !state.chores.dishes) return; localStorage.setItem(KEY, "1") } catch (e) { return }
+  const add = (coll, x) => { if (!state[coll][x.id]) state[coll][x.id] = x };
+  add("chores", { id: "water-filter", name: "Change the water filter", area: "Kitchen", every: 60, due: "2026-11-21", done: ["2026-09-22"], icon: "drop" });
+  add("chores", { id: "brush-head", name: "Replace the toothbrush head", area: "Bathroom", every: 90, due: "2027-01-06", done: ["2026-10-08"], icon: "tooth" });
+  add("supplies", { id: "water-filters", name: "Water filter cartridges", area: "Kitchen", lasts: 60, bought: "2026-09-22", icon: "drop" });
+  add("supplies", { id: "brush-heads", name: "Toothbrush heads", area: "Bathroom", lasts: 90, bought: "2026-10-08", icon: "tooth" });
+  persistLocal();
 }
 function persistLocal() { try { localStorage.setItem(LKEY, JSON.stringify({ chores: state.chores, supplies: state.supplies, shopping: state.shopping })) } catch (e) { toast("Couldn't save on this device. Free up some browser storage and try again.") } }
 const chains = {};
