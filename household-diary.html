@@ -329,7 +329,7 @@ function later(id) { const c = { ...state.chores[id] }; c.due = keyAdd(todayKey(
 function staggered(list) {
   const t = todayKey(), seen = {}, total = {};
   list.forEach(c => total[c.every] = (total[c.every] || 0) + 1);
-  return list.map(c => { const j = seen[c.every] = (seen[c.every] ?? -1) + 1; return { ...c, due: keyAdd(t, c.every === 1 ? 0 : Math.floor(j * c.every / total[c.every])) } });
+  return list.map(c => { const j = seen[c.every] = (seen[c.every] ?? -1) + 1; return { ...c, due: keyAdd(t, c.every === 1 ? 0 : Math.floor((j + 1) * c.every / (total[c.every] + 1))) } });
 }
 
 /* ---------- supplies ----------
