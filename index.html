@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Household Diary</title>
-<meta name="theme-color" content="#F4F1EA" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#141A17" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#F8F6F1" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1D2521" media="(prefers-color-scheme: dark)">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Household Diary">
@@ -18,15 +18,15 @@
 <title>Household Diary</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT@9..144,500..700,100&family=Manrope:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT@9..144,400..600,100&family=Manrope:wght@400;500;600;700&display=swap">
 <style>
 /* Layout: a "today" board of chores that are due (one card per room), the week as seven day cards, and a supplies list with a shopping list.
    Look: linen paper, forest green and mustard, flat cards with soft corners. Fraunces for headings, Manrope for everything else. */
 :root {
-  --bg: #F4F1EA; --bg-2: #EEE9DE;
-  --surface: #FFFDF8; --surface-2: #F8F5EE; --ink: #1F2A24; --muted: #6B776E; --line: rgba(31, 42, 36, .12);
-  --accent: #2F6B4F; --accent-ink: #FFFFFF; --accent-soft: #DDEBE1; --sun: #E0A43A; --sun-soft: #FBEFD6;
-  --warn: #B5532F; --warn-soft: #F7E3D7; --ok: #2F6B4F;
+  --bg: #F8F6F1; --bg-2: #F3F0E8;
+  --surface: #FFFFFF; --surface-2: #FBFAF6; --ink: #2E3833; --muted: #77827B; --line: rgba(46, 56, 51, .11);
+  --accent: #3E8C66; --accent-ink: #FFFFFF; --accent-soft: #E4F2E9; --sun: #E8B04B; --sun-soft: #FDF4E1;
+  --warn: #BF5D38; --warn-soft: #FBE9DF; --ok: #3E8C66;
   --shadow: 0 1px 0 rgba(31, 42, 36, .04), 0 6px 18px rgba(31, 42, 36, .06);
   --shadow-lg: 0 18px 50px rgba(31, 42, 36, .22);
   --serif: "Fraunces", "Iowan Old Style", Georgia, serif;
@@ -34,12 +34,12 @@
   --s0: #D9897A; --s1: #6FA8C9; --s2: #E07B5F; --s3: #74A886; --s4: #E0A43A; --s5: #A77BB0; --s6: #8C93D4; --s7: #C98A6B; --s8: #E98F3C; --s9: #5FB0A8;
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
-  --bg: #141A17; --bg-2: #18201C; --surface: #1E2723; --surface-2: #232D28; --ink: #ECE8DE; --muted: #9DA79F; --line: rgba(236, 232, 222, .12);
+  --bg: #1D2521; --bg-2: #222B26; --surface: #28322D; --surface-2: #2E3833; --ink: #F0ECE3; --muted: #AAB4AD; --line: rgba(240, 236, 227, .14);
   --accent: #8CCFA8; --accent-ink: #11201A; --accent-soft: #23392D; --sun: #E9B95C; --sun-soft: #3A3020;
   --warn: #E89B79; --warn-soft: #3B2620; --ok: #8CCFA8;
   --shadow: 0 1px 0 rgba(0,0,0,.25), 0 6px 18px rgba(0,0,0,.3); --shadow-lg: 0 18px 50px rgba(0,0,0,.6); color-scheme: dark } }
 :root[data-theme="dark"] {
-  --bg: #141A17; --bg-2: #18201C; --surface: #1E2723; --surface-2: #232D28; --ink: #ECE8DE; --muted: #9DA79F; --line: rgba(236, 232, 222, .12);
+  --bg: #1D2521; --bg-2: #222B26; --surface: #28322D; --surface-2: #2E3833; --ink: #F0ECE3; --muted: #AAB4AD; --line: rgba(240, 236, 227, .14);
   --accent: #8CCFA8; --accent-ink: #11201A; --accent-soft: #23392D; --sun: #E9B95C; --sun-soft: #3A3020;
   --warn: #E89B79; --warn-soft: #3B2620; --ok: #8CCFA8;
   --shadow: 0 1px 0 rgba(0,0,0,.25), 0 6px 18px rgba(0,0,0,.3); --shadow-lg: 0 18px 50px rgba(0,0,0,.6); color-scheme: dark }
@@ -72,12 +72,12 @@ body { margin: 0; min-height: 100%; color: var(--ink); font: 400 15px/1.55 var(-
 .wrap { max-width: 1200px; margin: 0 auto; padding-block: 28px 56px;
   padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 24px }
 h1, h2, h3 { margin: 0; font-family: var(--serif); text-wrap: balance; font-variation-settings: "SOFT" 100 }
-h1 { font-size: clamp(38px, 6vw, 56px); font-weight: 600; line-height: 1; letter-spacing: -.025em }
+h1 { font-size: clamp(38px, 6vw, 56px); font-weight: 500; line-height: 1; letter-spacing: -.025em }
 h1 em, h2 em { font-style: normal; color: var(--accent) }
 h1 em { position: relative }
 h1 em::after { content: ""; position: absolute; left: 0; right: 0; bottom: .02em; height: .14em; border-radius: 99px; background: var(--sun); opacity: .75; z-index: -1 }
-h2 { font-size: 26px; font-weight: 600; line-height: 1.15; letter-spacing: -.01em }
-h3 { font-size: 19px; font-weight: 600; line-height: 1.2 }
+h2 { font-size: 26px; font-weight: 500; line-height: 1.15; letter-spacing: -.01em }
+h3 { font-size: 19px; font-weight: 500; line-height: 1.2 }
 button, input, select, textarea { font: inherit; color: inherit }
 button { cursor: pointer }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px }
@@ -96,7 +96,7 @@ nav.tabs button[aria-selected="true"] { color: var(--accent); border-color: var(
 /* Today */
 .today { padding: 22px; display: grid; grid-template-columns: minmax(190px, .7fr) minmax(0, 2fr); gap: 18px; align-items: start }
 .today-intro { display: grid; align-content: start; gap: 16px; padding: 4px; min-width: 0 }
-.today-intro .date { font-family: var(--serif); font-size: 34px; font-weight: 600; line-height: 1.05; letter-spacing: -.015em }
+.today-intro .date { font-family: var(--serif); font-size: 34px; font-weight: 500; line-height: 1.05; letter-spacing: -.015em }
 .today-intro .date em { font-style: normal; color: var(--accent) }
 .areas { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; align-items: start; min-width: 0 }
 .area { --c: var(--s0); border-radius: 12px; padding: 14px 12px 8px 16px; display: grid; gap: 6px; align-content: start; min-width: 0;
@@ -156,7 +156,7 @@ nav.tabs button[aria-selected="true"] { color: var(--accent); border-color: var(
 .day.is-complete { background: color-mix(in srgb, var(--ok) 8%, var(--surface)) }
 .day-head { display: flex; align-items: baseline; justify-content: space-between; gap: 6px; padding-inline: 4px }
 .day-head .dow { font-size: 12px; font-weight: 700; letter-spacing: .06em; color: var(--muted) }
-.day-head .num { font-family: var(--serif); font-size: 30px; font-weight: 600; line-height: .95; font-variant-numeric: tabular-nums }
+.day-head .num { font-family: var(--serif); font-size: 30px; font-weight: 500; line-height: .95; font-variant-numeric: tabular-nums }
 .day.is-today .num { color: var(--accent) }
 .day ol { margin: 0; padding: 0; list-style: none; font-size: 13px; display: grid; gap: 3px }
 .day li { display: grid; grid-template-columns: 14px minmax(0, 1fr) auto; gap: 7px; align-items: center; overflow-wrap: anywhere; line-height: 1.35; padding-inline: 4px }
@@ -585,7 +585,7 @@ document.addEventListener("click", e => {
   else if (act === "edit-chore") openSheet("chore", id);
   else if (act === "edit-supply") openSheet("supply", id);
   else if (act === "close") { state.sheet = null; render() }
-  else if (act === "icon-set") { readForm(); state.sheet.draft.icon = el.dataset.icon; renderSheet() }
+  else if (act === "icon-set") { readForm(); state.sheet.draft.icon = el.dataset.icon; document.querySelectorAll("[data-act=icon-set]").forEach(b => b.setAttribute("aria-pressed", b === el)) }
   else if (act === "remove") { readForm(); state.sheet.confirm = true; renderSheet() }
   else if (act === "remove-no") { readForm(); state.sheet.confirm = false; renderSheet() }
   else if (act === "remove-yes") { const s = state.sheet, coll = s.kind === "chore" ? "chores" : "supplies", prev = state[coll][s.id]; state.sheet = null; removeItem(coll, s.id); toast(`Removed “${prev.name}”.`, () => saveItem(coll, prev)) }
@@ -599,9 +599,9 @@ document.addEventListener("change", e => {
   else if (act === "bought") bought(id);
   else if (act === "extra-done") { const x = state.shopping[id]; removeItem("shopping", id); toast(`Ticked off ${x?.name || "that"}.`, x && (() => saveItem("shopping", x))) }
   else if (act === "restore" && el.files?.[0]) restoreBackup(el.files[0]);
-  else if (el.id === "i-area") { readForm(); renderSheet() }
+  /* Recolour the icons in place: re-rendering here would swallow a tap that blurred the field. */
+  else if (el.id === "i-area") { readForm(); document.querySelectorAll("[data-act=icon-set]").forEach(b => b.style.setProperty("--c", `var(--s${tintOf(state.sheet.draft.area || "Home")})`)) }
 });
-document.addEventListener("focusout", e => { if (e.target.id === "i-area" || e.target.id === "i-name") setTimeout(renderSheet, 0) });
 document.addEventListener("keydown", e => { if (e.key === "Escape" && state.sheet) { state.sheet = null; render() } });
 document.addEventListener("submit", e => {
   e.preventDefault();

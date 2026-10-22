@@ -1,6 +1,6 @@
 # Household Diary
 
-Plan and tick off household chores, and keep a shopping list of the supplies you're running low on. A sister app to [Skin Diary](https://github.com/nurnhe/skin-diary), built the same way but with its own look: linen and forest green, Fraunces and Manrope.
+Plan and tick off household chores, and keep a shopping list of the supplies you're running low on. A sister app to [Skin Diary](https://github.com/nurnhe/skin-diary), built the same way but with its own look: light linen, soft green and mustard, Fraunces and Manrope.
 
 **Use it as a phone app:** open https://nurnhe.github.io/household-diary/ in Chrome on Android, then tap ⋮ → **Install app** (or **Add to Home screen**). It opens full screen with its own icon and works offline.
 
