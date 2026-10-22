@@ -1,0 +1,645 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Household Diary</title>
+<meta name="theme-color" content="#FBF4F7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#17111C" media="(prefers-color-scheme: dark)">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Household Diary">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<title>Household Diary</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Outfit:wght@300;400;500;600&display=swap">
+<style>
+/* Layout: a "today" card of chores that are due (grouped by area), the week as seven glassy day cards, and a shelf of supplies with a shopping list. Same look as Skin Diary. */
+:root {
+  --bg: #FBF4F7; --bg-2: #F1EAFB; --glow-1: #FFD9E6; --glow-2: #E4DBFF; --glow-3: #E3F6D9;
+  --surface: rgba(255, 255, 255, .72); --surface-solid: #FFFFFF; --ink: #2B1F33; --muted: #8A7B93; --line: rgba(122, 76, 130, .14);
+  --accent: #A23B7C; --accent-ink: #FFFFFF; --accent-soft: #F7E1EE; --lime: #B6D94C;
+  --warn: #B4462A; --warn-soft: #FDE8E0; --ok: #3E8A5C;
+  --shadow: 0 1px 2px rgba(80, 40, 90, .05), 0 10px 30px rgba(120, 60, 130, .09);
+  --shadow-lg: 0 24px 60px rgba(70, 30, 80, .22);
+  --serif: "Instrument Serif", "Iowan Old Style", Georgia, serif;
+  --sans: "Outfit", "Avenir Next", "Segoe UI", sans-serif;
+  --s0: #E89BB5; --s9: #8FD3E8; --s1: #7FB8E6; --s2: #F08A7E; --s3: #7FCFB0; --s4: #F2C14E; --s5: #C65BA0; --s6: #A99BF0; --s7: #C9A0C9; --s8: #F5A623;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #17111C; --bg-2: #1C1428; --glow-1: rgba(162, 59, 124, .28); --glow-2: rgba(91, 75, 181, .28); --glow-3: rgba(182, 217, 76, .10);
+  --surface: rgba(38, 28, 46, .72); --surface-solid: #261C2E; --ink: #F3EAF5; --muted: #B3A3BC; --line: rgba(230, 200, 240, .12);
+  --accent: #EE8CC6; --accent-ink: #2B1F33; --accent-soft: #3A2238; --lime: #C6E46A;
+  --warn: #F29A7A; --warn-soft: #3B2220; --ok: #7FD1A0;
+  --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 30px rgba(0,0,0,.35); --shadow-lg: 0 24px 60px rgba(0,0,0,.6); color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #17111C; --bg-2: #1C1428; --glow-1: rgba(162, 59, 124, .28); --glow-2: rgba(91, 75, 181, .28); --glow-3: rgba(182, 217, 76, .10);
+  --surface: rgba(38, 28, 46, .72); --surface-solid: #261C2E; --ink: #F3EAF5; --muted: #B3A3BC; --line: rgba(230, 200, 240, .12);
+  --accent: #EE8CC6; --accent-ink: #2B1F33; --accent-soft: #3A2238; --lime: #C6E46A;
+  --warn: #F29A7A; --warn-soft: #3B2220; --ok: #7FD1A0;
+  --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 30px rgba(0,0,0,.35); --shadow-lg: 0 24px 60px rgba(0,0,0,.6); color-scheme: dark }
+
+* { box-sizing: border-box }
+html { min-height: 100% }
+body { min-height: 100%; color: var(--ink); font: 300 15px/1.55 var(--sans);
+  background: radial-gradient(900px 500px at 8% -5%, var(--glow-1), transparent 60%), radial-gradient(800px 520px at 100% 10%, var(--glow-2), transparent 60%),
+    radial-gradient(700px 400px at 50% 110%, var(--glow-3), transparent 60%), linear-gradient(180deg, var(--bg), var(--bg-2)); background-color: var(--bg); background-attachment: fixed }
+.bottom-nav { display: none }
+@media (max-width: 700px) {
+  header.top nav.tabs { display: none }
+  .brand h1 { font-size: 40px }
+  .brand .eyebrow { display: none }
+  .wrap { padding-block: 16px calc(96px + env(safe-area-inset-bottom, 0px)); gap: 18px }
+  .bottom-nav { display: grid; grid-template-columns: repeat(4, 1fr); position: fixed; left: 0; right: 0; bottom: 0; z-index: 15;
+    padding: 6px max(8px, env(safe-area-inset-left, 0px)) calc(6px + env(safe-area-inset-bottom, 0px)) max(8px, env(safe-area-inset-right, 0px));
+    background: var(--surface); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); border-top: 1px solid var(--line) }
+  .bottom-nav button { border: 0; background: none; display: grid; justify-items: center; gap: 2px; padding: 6px 0; font-size: 11.5px; font-weight: 500; color: var(--muted); border-radius: 14px; -webkit-tap-highlight-color: transparent }
+  .bottom-nav svg { width: 26px; height: 26px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; padding: 2px 14px; box-sizing: content-box; border-radius: 999px; transition: background .2s }
+  .bottom-nav button[aria-current="page"] { color: var(--accent) }
+  .bottom-nav button[aria-current="page"] svg { background: var(--accent-soft) }
+  .today { padding: 14px; gap: 12px }
+  .area { padding: 12px 10px 8px }
+  .step { grid-template-columns: 24px 36px minmax(0, 1fr); padding: 6px 4px }
+  .step .thumb { width: 36px !important; height: 36px !important }
+  .skip-btn { padding: 6px 8px }
+}
+.wrap { max-width: 1260px; margin: 0 auto; padding-block: 28px 56px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 26px }
+h1, h2, h3 { margin: 0; font-weight: 400; text-wrap: balance }
+h1 { font-family: var(--serif); font-size: clamp(44px, 7vw, 68px); line-height: .95; letter-spacing: -.02em }
+h1 em, h2 em { color: var(--accent) }
+h2 { font-family: var(--serif); font-size: 30px; line-height: 1.1 }
+h3 { font-family: var(--serif); font-size: 22px; line-height: 1.1 }
+button, input, select, textarea { font: inherit; color: inherit }
+button { cursor: pointer }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px }
+.muted { color: var(--muted) }
+.eyebrow { font-size: 11px; font-weight: 500; letter-spacing: .14em; text-transform: uppercase; color: var(--muted) }
+
+header.top { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 16px 24px }
+.brand { display: grid; gap: 6px }
+nav.tabs { display: flex; gap: 2px; background: var(--surface); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: 1px solid var(--line); border-radius: 999px; padding: 4px; box-shadow: var(--shadow) }
+nav.tabs button { border: 0; background: none; padding: 8px 16px; border-radius: 999px; font-weight: 400; color: var(--muted); transition: background .2s, color .2s }
+nav.tabs button[aria-selected="true"] { background: var(--ink); color: var(--bg); font-weight: 500 }
+
+.glass { background: var(--surface); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid var(--line); border-radius: 26px; box-shadow: var(--shadow) }
+
+/* Today */
+.today { padding: 22px; display: grid; grid-template-columns: minmax(180px, .7fr) minmax(0, 2fr); gap: 16px; align-items: start }
+.today-intro { display: grid; align-content: start; gap: 14px; padding: 6px; min-width: 0 }
+.today-intro .date { font-family: var(--serif); font-size: 40px; line-height: 1 }
+.today-intro .date em { color: var(--accent) }
+.areas { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; align-items: start; min-width: 0 }
+.area { --c: var(--s0); border-radius: 20px; padding: 16px 14px 10px; display: grid; gap: 8px; align-content: start; min-width: 0;
+  background: linear-gradient(140deg, color-mix(in srgb, var(--c) 24%, var(--surface-solid)), color-mix(in srgb, var(--c) 9%, var(--surface-solid))) }
+.area h3 { color: color-mix(in srgb, var(--c) 55%, var(--ink)) }
+.area-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; padding-inline: 4px }
+.count { font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums }
+.steps { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px }
+.steps li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px; align-items: center; font-size: 15px }
+.step { display: grid; grid-template-columns: 22px 40px minmax(0, 1fr); gap: 10px; align-items: center; padding: 5px 8px; border-radius: 12px; cursor: pointer; transition: background .15s }
+.step:hover { background: color-mix(in srgb, var(--surface-solid) 55%, transparent) }
+.step input { appearance: none; -webkit-appearance: none; width: 22px; height: 22px; margin: 0; border-radius: 50%; border: 1.5px solid color-mix(in srgb, var(--muted) 60%, transparent); background: var(--surface-solid); display: grid; place-items: center; cursor: pointer; transition: background .15s, border-color .15s }
+.step input::after { content: "✓"; font-size: 13px; line-height: 1; color: #fff; opacity: 0 }
+.step input:checked { background: var(--ok); border-color: var(--ok) }
+.step input:checked::after { opacity: 1 }
+.step .txt { overflow-wrap: anywhere }
+.step .sub { display: block; font-size: 12px; color: var(--muted) }
+.sub .late { color: var(--warn); font-weight: 500 }
+.steps li.done .nm { color: var(--muted); text-decoration: line-through; text-decoration-color: color-mix(in srgb, var(--muted) 70%, transparent) }
+.skip-btn { border: 1px solid transparent; background: none; border-radius: 999px; padding: 3px 10px; font-size: 12.5px; color: var(--muted); white-space: nowrap }
+.skip-btn:hover { border-color: var(--line); background: var(--surface-solid); color: var(--ink) }
+.thumb { display: inline-grid; place-items: center; border-radius: 12px; flex: none; background: var(--surface-solid); box-shadow: 0 0 0 1px var(--line) }
+.thumb.icon { background: color-mix(in srgb, var(--c) 20%, var(--surface-solid)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c) 30%, transparent) }
+.thumb.icon svg { width: 60%; height: 60%; color: color-mix(in srgb, var(--c) 80%, var(--ink)) }
+.mini-icon { width: 14px; height: 14px; color: color-mix(in srgb, var(--c) 80%, var(--ink)); display: grid }
+.mini-icon svg { width: 14px; height: 14px }
+.icon-grid { display: flex; flex-wrap: wrap; gap: 6px; padding-top: 4px }
+.icon-grid button { width: 40px; height: 40px; border-radius: 12px; border: 1px solid var(--line); background: var(--bg); color: color-mix(in srgb, var(--c) 80%, var(--ink)); display: grid; place-items: center }
+.icon-grid button svg { width: 22px; height: 22px }
+.icon-grid button[aria-pressed="true"] { background: color-mix(in srgb, var(--c) 22%, var(--surface-solid)); border-color: var(--c) }
+.complete-badge { justify-self: start; display: inline-flex; align-items: center; gap: 6px; background: var(--ok); color: #fff; font-weight: 500; font-size: 13px; padding: 4px 12px; border-radius: 999px }
+.complete-badge.small { font-size: 11.5px; padding: 2px 9px; margin-inline: 4px }
+.progress { display: grid; gap: 6px; font-size: 13.5px }
+.bar { height: 8px; border-radius: 999px; background: var(--line); overflow: hidden }
+.bar span { display: block; height: 100%; border-radius: 999px; background: var(--ok); transition: width .25s }
+.low-card { display: grid; gap: 8px; padding: 14px; border-radius: 20px; background: var(--surface-solid); border: 1px solid var(--line) }
+.low-card ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; font-size: 14px }
+.low-card li { display: grid; grid-template-columns: 14px minmax(0, 1fr); gap: 8px; align-items: center }
+.all-done { display: grid; gap: 6px; justify-items: start; padding: 18px; border-radius: 20px; background: color-mix(in srgb, var(--ok) 10%, var(--surface-solid)) }
+.all-done p { margin: 0 }
+
+/* Week */
+.weekbar { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 12px }
+.weekbar h2 { margin-right: auto }
+.btn { border: 1px solid var(--line); background: var(--surface-solid); border-radius: 999px; padding: 7px 14px; font-weight: 400; transition: border-color .2s, transform .2s; text-decoration: none }
+.btn:hover { border-color: var(--accent) }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 500 }
+.btn.ghost { background: none; border-color: transparent; color: var(--muted) }
+.btn.small { padding: 4px 11px; font-size: 13px }
+.btn.danger { color: var(--warn); border-color: var(--warn) }
+.pager { display: flex; gap: 6px }
+.week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 12px }
+.day { padding: 14px 12px 12px; border-radius: 22px; display: grid; gap: 8px; align-content: start; min-width: 0; color: var(--ink) }
+.day.is-today { box-shadow: 0 0 0 2px var(--lime), var(--shadow) }
+.day.is-past { opacity: .82 }
+.day.is-complete { background: color-mix(in srgb, var(--ok) 9%, var(--surface)) }
+.day-head { display: flex; align-items: baseline; justify-content: space-between; gap: 6px; padding-inline: 4px }
+.day-head .dow { font-size: 11px; font-weight: 500; letter-spacing: .14em; text-transform: uppercase; color: var(--muted) }
+.day-head .num { font-family: var(--serif); font-size: 34px; line-height: .9; font-variant-numeric: tabular-nums }
+.day.is-today .num { color: var(--accent); font-style: italic }
+.day ol { margin: 0; padding: 0; list-style: none; font-size: 13px; display: grid; gap: 3px }
+.day li { display: grid; grid-template-columns: 14px minmax(0, 1fr) auto; gap: 7px; align-items: center; overflow-wrap: anywhere; line-height: 1.35; padding-inline: 4px }
+.day li.done > span:nth-child(2) { color: var(--muted) }
+.day .empty { font-size: 13px; color: var(--muted); padding-inline: 4px }
+.tick { font-size: 11px; color: var(--ok); font-weight: 600 }
+.tick.late { color: var(--warn) }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12.5px; color: var(--muted) }
+.legend span { display: inline-flex; gap: 6px; align-items: center }
+.dot { width: 7px; height: 7px; border-radius: 50%; background: var(--c, var(--muted)) }
+
+@media (max-width: 1000px) {
+  .today { grid-template-columns: minmax(0, 1fr) }
+  .today-intro { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between }
+  .week { grid-template-columns: minmax(0, 1fr) }
+  .day { grid-template-columns: 70px minmax(0, 1fr); align-items: start }
+  .day-head { flex-direction: column; align-items: start; gap: 2px; grid-row: span 3 }
+}
+@media (max-width: 600px) {
+  .areas { grid-template-columns: minmax(0, 1fr) }
+  .day { grid-template-columns: minmax(0, 1fr) }
+  .day-head { grid-row: auto; flex-direction: row; align-items: baseline; justify-content: start; gap: 10px }
+}
+
+.panel { padding: 22px; display: grid; gap: 14px; min-width: 0 }
+.panel-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 12px }
+.empty-state { text-align: center; padding: 48px 20px; display: grid; gap: 12px; justify-items: center }
+.empty-state p { max-width: 46ch; margin: 0 }
+
+/* Lists of chores and supplies */
+.group { display: grid; gap: 8px }
+.group > .eyebrow { display: flex; align-items: center; gap: 8px; padding-inline: 4px }
+.row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 8px 12px 8px 8px; border-radius: 16px; background: var(--surface-solid); border: 1px solid var(--line) }
+.row .nm { font-weight: 500; overflow-wrap: anywhere }
+.row .meta { font-size: 13px; color: var(--muted) }
+.row.is-low { background: color-mix(in srgb, var(--warn) 6%, var(--surface-solid)) }
+.acts { display: flex; gap: 4px; flex-wrap: wrap; justify-content: end; align-items: center }
+.low-btn { border: 1px solid var(--line); background: var(--surface-solid); border-radius: 999px; padding: 5px 12px; font-size: 13px; font-weight: 500; white-space: nowrap }
+.low-btn[aria-pressed="true"] { background: var(--warn-soft); border-color: transparent; color: var(--warn) }
+.row-main { border: 0; background: none; padding: 2px; display: grid; grid-template-columns: 48px minmax(0, 1fr); gap: 12px; align-items: center; text-align: left; border-radius: 12px; min-width: 0; -webkit-tap-highlight-color: transparent }
+.row-main:hover .nm { color: var(--accent) }
+.shop { display: grid; gap: 4px }
+.shop .step { grid-template-columns: 22px 34px minmax(0, 1fr) }
+.add-line { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px }
+.hint { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 8px 12px; border-radius: 14px; background: color-mix(in srgb, var(--surface-solid) 70%, transparent); border: 1px dashed var(--line); font-size: 14px }
+.hint .sub { display: block; font-size: 12px; color: var(--muted) }
+.field { display: grid; gap: 5px; font-size: 13px; color: var(--muted) }
+.input { border: 1px solid var(--line); background: var(--surface-solid); border-radius: 14px; padding: 9px 12px; color: var(--ink); width: 100%; min-width: 0 }
+.form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px }
+
+/* Sheet */
+.scrim { position: fixed; inset: 0; background: rgba(40, 20, 45, .35); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); z-index: 20 }
+.sheet { position: fixed; top: 0; right: 0; bottom: 0; width: min(480px, 100%); background: var(--surface-solid); z-index: 21; box-shadow: var(--shadow-lg);
+  display: grid; grid-template-rows: auto minmax(0, 1fr); border-radius: 28px 0 0 28px;
+  padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); padding-right: env(safe-area-inset-right, 0px) }
+@media (max-width: 520px) { .sheet { border-radius: 0 } }
+.sheet-head { display: flex; align-items: start; justify-content: space-between; gap: 12px; padding: 22px 22px 14px; border-bottom: 1px solid var(--line) }
+.sheet-head h2 { font-size: 32px; overflow-wrap: anywhere }
+.sheet-body { overflow-y: auto; padding: 18px 22px 32px; display: grid; gap: 18px; align-content: start }
+.sheet-foot { display: flex; flex-wrap: wrap; gap: 8px; align-items: center }
+.sheet-foot .spacer { margin-right: auto }
+.status { font-size: 12px; color: var(--muted); margin: 0 }
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(18px + env(safe-area-inset-bottom, 0px)); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 999px; font-size: 14px; z-index: 30; box-shadow: var(--shadow-lg); max-width: calc(100% - 32px) }
+@media (max-width: 700px) { .toast { bottom: calc(84px + env(safe-area-inset-bottom, 0px)); border-radius: 20px } }
+@media (prefers-reduced-motion: no-preference) {
+  .sheet { animation: slide .25s cubic-bezier(.2, .8, .2, 1) } @keyframes slide { from { transform: translateX(40px); opacity: .5 } }
+}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <span class="eyebrow">Chores &amp; supplies</span>
+      <h1>Household <em>Diary</em></h1>
+    </div>
+    <nav class="tabs" role="tablist" aria-label="Views">
+      <button role="tab" data-act="tab" data-tab="today" aria-selected="true">Today</button>
+      <button role="tab" data-act="tab" data-tab="week" aria-selected="false">Week</button>
+      <button role="tab" data-act="tab" data-tab="chores" aria-selected="false">Chores</button>
+      <button role="tab" data-act="tab" data-tab="supplies" aria-selected="false">Supplies</button>
+    </nav>
+  </header>
+  <main id="main" style="display:grid;gap:26px"></main>
+  <p class="status" id="status"></p>
+</div>
+<nav class="bottom-nav" aria-label="Views">
+  <button data-act="tab" data-tab="today"><svg viewBox="0 0 24 24" aria-hidden="true" data-nav="today"></svg><span>Today</span></button>
+  <button data-act="tab" data-tab="week"><svg viewBox="0 0 24 24" aria-hidden="true" data-nav="week"></svg><span>Week</span></button>
+  <button data-act="tab" data-tab="chores"><svg viewBox="0 0 24 24" aria-hidden="true" data-nav="chores"></svg><span>Chores</span></button>
+  <button data-act="tab" data-tab="supplies"><svg viewBox="0 0 24 24" aria-hidden="true" data-nav="supplies"></svg><span>Supplies</span></button>
+</nav>
+<div id="sheetRoot"></div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+const DOW = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+/* Each area has its own tint, used for icon tiles and the Today groups. */
+const AREA_ORDER = ["Kitchen", "Bathroom", "Laundry", "Bedroom", "Home"];
+const AREA_TINT = { Kitchen: 4, Bathroom: 1, Laundry: 6, Bedroom: 7, Home: 3 };
+const tintOf = area => AREA_TINT[area] ?? [0, 2, 5, 8, 9][[...String(area)].reduce((n, c) => n + c.charCodeAt(0), 0) % 5];
+const areaRank = a => { const i = AREA_ORDER.indexOf(a); return i < 0 ? 99 : i };
+const FREQS = [[1, "Every day"], [2, "Every 2 days"], [3, "Every 3 days"], [4, "Every 4 days"], [7, "Every week"], [14, "Every 2 weeks"], [30, "Every month"], [60, "Every 2 months"], [90, "Every 3 months"], [180, "Every 6 months"]];
+const LASTS = [[7, "About a week"], [14, "About 2 weeks"], [21, "About 3 weeks"], [30, "About a month"], [45, "About 6 weeks"], [60, "About 2 months"], [90, "About 3 months"], [180, "About 6 months"]];
+const freqLabel = n => FREQS.find(([d]) => d === n)?.[1] || `Every ${n} days`;
+const lastsLabel = n => (LASTS.find(([d]) => d === n)?.[1] || `About ${n} days`).replace(/^About/, "about");
+
+/* Starter list: a typical home, trimmed by KK. Used only when someone taps "Use the starter list". */
+const STARTER = {
+  chores: [["dishes", "Run or empty the dishwasher", "Kitchen", 1], ["wipe-counters", "Wipe kitchen counters and stove", "Kitchen", 1], ["tidy", "Quick tidy (10 minutes)", "Home", 1],
+    ["trash", "Take out the trash", "Home", 3], ["laundry", "Do a load of laundry", "Laundry", 4], ["vacuum", "Vacuum floors", "Home", 7], ["mop", "Mop hard floors", "Home", 7],
+    ["bathroom", "Clean bathroom (sink, toilet, mirror)", "Bathroom", 7], ["shower", "Clean shower or bath", "Bathroom", 7], ["bedding", "Change bed sheets", "Bedroom", 7],
+    ["towels", "Wash towels", "Laundry", 7], ["dust", "Dust surfaces", "Home", 7], ["fridge-check", "Clear out old food from the fridge", "Kitchen", 7],
+    ["fridge-clean", "Wipe inside the fridge", "Kitchen", 30], ["microwave", "Clean microwave and oven", "Kitchen", 30], ["windows", "Clean windows and mirrors", "Home", 30],
+    ["declutter", "Declutter one drawer or shelf", "Home", 30]],
+  supplies: [["dishwasher-pills", "Dishwasher pills", "Kitchen", 30], ["dish-soap", "Dish soap", "Kitchen", 30], ["rinse-aid", "Rinse aid", "Kitchen", 60], ["dishwasher-salt", "Dishwasher salt", "Kitchen", 90],
+    ["sponges", "Sponges", "Kitchen", 14], ["paper-towels", "Paper towels", "Kitchen", 21], ["trash-bags", "Trash bags", "Home", 30], ["surface-spray", "All-purpose cleaner", "Home", 45],
+    ["laundry-detergent", "Laundry detergent", "Laundry", 45], ["fabric-softener", "Fabric softener", "Laundry", 60], ["hand-soap", "Hand soap", "Bathroom", 30], ["toilet-paper", "Toilet paper", "Bathroom", 14],
+    ["toilet-cleaner", "Toilet cleaner", "Bathroom", 45], ["bathroom-cleaner", "Bathroom / limescale cleaner", "Bathroom", 45], ["shower-gel", "Shower gel and shampoo", "Bathroom", 30],
+    ["toothpaste", "Toothpaste", "Bathroom", 45], ["washer-cleaner", "Washing machine cleaner", "Laundry", 90]]
+};
+
+const state = { tab: "today", weekStart: mondayOf(new Date()), chores: {}, supplies: {}, shopping: {}, loaded: false, mode: "loading", sheet: null };
+let db = null;
+
+/* ---------- dates ---------- */
+function mondayOf(d) { const x = new Date(d.getFullYear(), d.getMonth(), d.getDate()); x.setDate(x.getDate() - ((x.getDay() + 6) % 7)); return x }
+function addDays(d, n) { const x = new Date(d); x.setDate(x.getDate() + n); return x }
+function keyOf(d) { return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0") }
+function fromKey(k) { const [y, m, d] = k.split("-").map(Number); return new Date(y, m - 1, d) }
+const todayKey = () => keyOf(new Date());
+const dayNum = k => { const [y, m, d] = k.split("-").map(Number); return Math.round(Date.UTC(y, m - 1, d) / 864e5) };
+const keyAdd = (k, n) => keyOf(addDays(fromKey(k), n));
+const short = k => fromKey(k).toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" });
+function when(k) {
+  const n = dayNum(k) - dayNum(todayKey());
+  return n === 0 ? "today" : n === 1 ? "tomorrow" : n === -1 ? "yesterday" : n < 0 ? `${-n} days ago` : n < 7 ? DOW[fromKey(k).getDay()] : short(k);
+}
+
+/* ---------- helpers ---------- */
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const newId = p => p + "_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
+const chores = () => Object.values(state.chores).sort((a, b) => areaRank(a.area) - areaRank(b.area) || a.area.localeCompare(b.area) || a.every - b.every || a.name.localeCompare(b.name));
+const supplies = () => Object.values(state.supplies).sort((a, b) => areaRank(a.area) - areaRank(b.area) || a.area.localeCompare(b.area) || a.name.localeCompare(b.name));
+const areas = () => [...new Set([...AREA_ORDER, ...chores().map(c => c.area), ...supplies().map(s => s.area)])];
+function byArea(list) { const g = new Map(); for (const x of list) { if (!g.has(x.area)) g.set(x.area, []); g.get(x.area).push(x) } return [...g] }
+/* Icons: Phosphor Icons (MIT), IconPark (Apache 2.0) and, in the bottom bar, Tabler Icons (MIT). */
+const ICONS = {"tube":{"v":"0 0 48 48","fill":2,"d":"<path d=\"M15 34V44H33V34\" stroke=\"currentColor\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M31.935 4.00006L15.9855 4.00006C9.04201 4.00006 8.51255 8.60541 9.24893 11.0399L14.9891 34H32.9312C32.9312 34 37.5745 16.1827 38.8188 11.0399C39.4079 8.60542 38.9097 3.98264 31.935 4.00006Z\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"3\"/><path d=\"M20.4876 19.0909C22.1273 17.1458 23.3912 14.4588 24.0744 13C25.27 14.4588 27.8662 18.1184 28.686 20.0634C29.7109 22.4947 27.1488 25.4122 24.0744 25.4122C21 25.4122 18.4379 21.5222 20.4876 19.0909Z\" stroke=\"currentColor\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"},"bottle":{"v":"0 0 48 48","fill":2,"d":"<path d=\"M21.1875 10H26.8125L33 21.1806V44H15V21.1806L21.1875 10Z\" stroke=\"currentColor\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><rect x=\"20\" y=\"4\" width=\"8\" height=\"6\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><rect x=\"21\" y=\"23\" width=\"6\" height=\"12\" rx=\"3\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"},"toner":{"v":"0 0 48 48","fill":2,"d":"<path d=\"M15 21.5597C15 18.1105 16.8097 14.9142 19.7674 13.1395C19.9117 13.053 20 12.897 20 12.7288V4H28V12.7288C28 12.897 28.0883 13.053 28.2326 13.1395C31.1903 14.9142 33 18.1105 33 21.5597V42C33 43.1046 32.1046 44 31 44H17C15.8954 44 15 43.1046 15 42V21.5597Z\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M20 10L28 10\" stroke=\"currentColor\" stroke-width=\"3\" stroke-linecap=\"round\"/><path d=\"M33 23H24V38H33\" stroke=\"currentColor\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M33 40V21\" stroke=\"currentColor\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M20 12V8\" stroke=\"currentColor\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M28 12V8\" stroke=\"currentColor\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"},"pump-bottle":{"v":"0 0 48 48","fill":2,"d":"<path d=\"M36 18H12V44H36V18Z\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"3\" stroke-linejoin=\"round\"/><path fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M19.8943 11H28.1057C29.8329 11 31.365 12.1086 31.9051 13.7492L33.3045 18H14.6953L16.0949 13.7491C16.635 12.1086 18.1671 11 19.8943 11Z\" stroke=\"currentColor\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M21 11V7C21 5.34315 22.3431 4 24 4C25.6569 4 27 5.34315 27 7V11\" stroke=\"currentColor\" stroke-width=\"3\" stroke-linecap=\"round\"/><path d=\"M18.5 26V36\" stroke=\"currentColor\" stroke-width=\"3\" stroke-linecap=\"round\"/>"},"broom":{"v":"0 0 256 256","fill":1,"d":"<path d=\"M235.29,216.7C212.86,205.69,200,182.12,200,152V134.69a15.94,15.94,0,0,0-10.09-14.87l-28.65-11.46A8,8,0,0,1,156.79,98l22.32-56.67C184,28.79,178,14.21,165.34,9.51a24,24,0,0,0-30.7,13.71L112.25,80.08a8,8,0,0,1-10.41,4.5L73.11,73.08a15.91,15.91,0,0,0-17.38,3.66C34.68,98.4,24,123.71,24,152a111.53,111.53,0,0,0,31.15,77.53A8.06,8.06,0,0,0,61,232H232a8,8,0,0,0,8-7.51A8.21,8.21,0,0,0,235.29,216.7ZM115.11,216a87.52,87.52,0,0,1-24.26-41.71,8.21,8.21,0,0,0-9.25-6.18A8,8,0,0,0,75.28,178a105.33,105.33,0,0,0,18.36,38H64.44A95.62,95.62,0,0,1,40,152a85.92,85.92,0,0,1,7.73-36.3l137.8,55.13c3,18.06,10.55,33.5,21.89,45.19Z\"/>"},"washing-machine":{"v":"0 0 256 256","fill":1,"d":"<path d=\"M208,32H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32ZM128,184a56,56,0,1,1,56-56A56,56,0,0,1,128,184ZM188,80a12,12,0,1,1,12-12A12,12,0,0,1,188,80Zm-54.34,29.66-32,32a8,8,0,0,1-11.32-11.32l32-32a8,8,0,0,1,11.32,11.32Zm32-3.32a8,8,0,0,1,0,11.32l-48,48a8,8,0,0,1-11.32-11.32l48-48A8,8,0,0,1,165.66,106.34Z\"/>"},"trash":{"v":"0 0 256 256","fill":1,"d":"<path d=\"M216,48H176V40a24,24,0,0,0-24-24H104A24,24,0,0,0,80,40v8H40a8,8,0,0,0,0,16h8V208a16,16,0,0,0,16,16H192a16,16,0,0,0,16-16V64h8a8,8,0,0,0,0-16ZM112,168a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Zm48,0a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Zm0-120H96V40a8,8,0,0,1,8-8h48a8,8,0,0,1,8,8Z\"/>"},"bathtub":{"v":"0 0 256 256","fill":1,"d":"<path d=\"M240,96H216a8,8,0,0,0-8-8H136a8,8,0,0,0-8,8H64V52A12,12,0,0,1,76,40a12.44,12.44,0,0,1,12.16,9.59,8,8,0,0,0,15.68-3.18A28.32,28.32,0,0,0,76,24,28,28,0,0,0,48,52V96H16a8,8,0,0,0-8,8v40a56.06,56.06,0,0,0,56,56v16a8,8,0,0,0,16,0V200h96v16a8,8,0,0,0,16,0V200a56.06,56.06,0,0,0,56-56V104A8,8,0,0,0,240,96Zm-40,8v40H144V104Z\"/>"},"toilet":{"v":"0 0 256 256","fill":1,"d":"<path d=\"M60,88H196a4,4,0,0,0,4-4V40a16,16,0,0,0-16-16H72A16,16,0,0,0,56,40V84A4,4,0,0,0,60,88ZM88,48h15.73A8.18,8.18,0,0,1,112,55.47,8,8,0,0,1,104,64H88.27A8.18,8.18,0,0,1,80,56.53,8,8,0,0,1,88,48Zm136,64.06a8,8,0,0,0-8-8.06H40a8,8,0,0,0-8,8.06,96.1,96.1,0,0,0,51.68,85.08l-3.47,24.27a16.43,16.43,0,0,0,1.63,10A16,16,0,0,0,96,240h63.66a16.52,16.52,0,0,0,9.72-3,16,16,0,0,0,6.46-15.23l-3.52-24.6A96.1,96.1,0,0,0,224,112.06ZM96,224l2.93-20.5a96.15,96.15,0,0,0,58.14,0L160,224Z\"/>"},"bed":{"v":"0 0 256 256","fill":1,"d":"<path d=\"M216,72H32V48a8,8,0,0,0-16,0V208a8,8,0,0,0,16,0V176H240v32a8,8,0,0,0,16,0V112A40,40,0,0,0,216,72ZM32,88h72v72H32Z\"/>"},"t-shirt":{"v":"0 0 256 256","fill":1,"d":"<path d=\"M247.59,61.22,195.83,33A8,8,0,0,0,192,32H160a8,8,0,0,0-8,8,24,24,0,0,1-48,0,8,8,0,0,0-8-8H64a8,8,0,0,0-3.84,1L8.41,61.22A15.76,15.76,0,0,0,1.82,82.48l19.27,36.81A16.37,16.37,0,0,0,35.67,128H56v80a16,16,0,0,0,16,16H184a16,16,0,0,0,16-16V128h20.34a16.37,16.37,0,0,0,14.58-8.71l19.27-36.81A15.76,15.76,0,0,0,247.59,61.22ZM35.67,112a.62.62,0,0,1-.41-.13L16.09,75.26,56,53.48V112Zm185.07-.14a.55.55,0,0,1-.41.14H200V53.48l39.92,21.78Z\"/>"},"fork-knife":{"v":"0 0 256 256","fill":1,"d":"<path d=\"M216,40V224a8,8,0,0,1-16,0V176H152a8,8,0,0,1-8-8,268.75,268.75,0,0,1,7.22-56.88c9.78-40.49,28.32-67.63,53.63-78.47A8,8,0,0,1,216,40Zm-96.11-1.31a8,8,0,1,0-15.78,2.63L111.89,88H88V40a8,8,0,0,0-16,0V88H48.11l7.78-46.68a8,8,0,1,0-15.78-2.63l-8,48A8.17,8.17,0,0,0,32,88a48.07,48.07,0,0,0,40,47.32V224a8,8,0,0,0,16,0V135.32A48.07,48.07,0,0,0,128,88a8.17,8.17,0,0,0-.11-1.31Z\"/>"},"cooking-pot":{"v":"0 0 256 256","fill":1,"d":"<path d=\"M88,48V16a8,8,0,0,1,16,0V48a8,8,0,0,1-16,0Zm40,8a8,8,0,0,0,8-8V16a8,8,0,0,0-16,0V48A8,8,0,0,0,128,56Zm32,0a8,8,0,0,0,8-8V16a8,8,0,0,0-16,0V48A8,8,0,0,0,160,56Zm94.4,35.2a8,8,0,0,0-11.2-1.6L224,104V80a8,8,0,0,0-8-8H40a8,8,0,0,0-8,8v24L12.8,89.6a8,8,0,0,0-9.6,12.8L32,124v60a32,32,0,0,0,32,32H192a32,32,0,0,0,32-32V124l28.8-21.6A8,8,0,0,0,254.4,91.2Z\"/>"},"shower":{"v":"0 0 256 256","fill":1,"d":"<path d=\"M64,236a12,12,0,1,1-12-12A12,12,0,0,1,64,236Zm20-44a12,12,0,1,0,12,12A12,12,0,0,0,84,192Zm-64,0a12,12,0,1,0,12,12A12,12,0,0,0,20,192Zm32-32a12,12,0,1,0,12,12A12,12,0,0,0,52,160ZM248,32H216a8,8,0,0,0-5.66,2.34l-30.2,30.2L53.38,86.19a16,16,0,0,0-8.69,27.1l98,98a16,16,0,0,0,27.09-8.66L191.46,75.86,219.31,48H248a8,8,0,0,0,0-16Z\"/>"},"spray-bottle":{"v":"0 0 256 256","fill":1,"d":"<path d=\"M200,80a8,8,0,0,0,8-8,56.06,56.06,0,0,0-56-56H80A16,16,0,0,0,64,32V80a24,24,0,0,1-24,24,8,8,0,0,0,0,16A40,40,0,0,0,80,80h32v24.62a23.87,23.87,0,0,1-9,18.74L87,136.15a39.79,39.79,0,0,0-15,31.23V224a16,16,0,0,0,16,16H192a16,16,0,0,0,16-16V211.47A270.88,270.88,0,0,0,174,80ZM80,32h72a40.08,40.08,0,0,1,39.2,32H80Z\"/>"},"toilet-paper":{"v":"0 0 256 256","fill":1,"d":"<path d=\"M184,120a8,8,0,0,1-8,8H160a8,8,0,0,1,0-16h16A8,8,0,0,1,184,120Zm56,0v88a16,16,0,0,1-16,16H112a16,16,0,0,1-16-16V186.35C87.37,200.37,76.18,208,64,208c-13.87,0-26.46-9.89-35.44-27.85C20.46,164,16,142.59,16,120s4.46-43.95,12.56-60.15C37.54,41.89,50.13,32,64,32H192c13.87,0,26.46,9.89,35.44,27.85C235.54,76.05,240,97.41,240,120ZM76,120a12,12,0,1,0-12,12A12,12,0,0,0,76,120Zm148,8H208a8,8,0,0,1,0-16h15.79C221.84,73.9,206.16,48,192,48H92.12a73.6,73.6,0,0,1,7.32,11.85c7.14,14.28,11.44,32.56,12.37,52.15H128a8,8,0,0,1,0,16H112v80H224Z\"/>"},"hand-soap":{"v":"0 0 256 256","fill":1,"d":"<path d=\"M184,96.8V88a32,32,0,0,0-32-32H136V32h32a8,8,0,0,1,8,8,8,8,0,0,0,16,0,24,24,0,0,0-24-24H104a8,8,0,0,0,0,16h16V56H104A32,32,0,0,0,72,88v8.8A40.07,40.07,0,0,0,40,136v80a16,16,0,0,0,16,16H200a16,16,0,0,0,16-16V136A40.07,40.07,0,0,0,184,96.8ZM104,72h48a16,16,0,0,1,16,16v8H88V88A16,16,0,0,1,104,72Z\"/>"},"basket":{"v":"0 0 256 256","fill":1,"d":"<path d=\"M238,82.73A8,8,0,0,0,232,80H187.63L134,18.73a8,8,0,0,0-12,0L68.37,80H24a8,8,0,0,0-7.93,9.06L31.14,202.12A16.06,16.06,0,0,0,47,216H209a16.06,16.06,0,0,0,15.86-13.88L239.93,89.06A8,8,0,0,0,238,82.73ZM81.6,184a7.32,7.32,0,0,1-.81,0,8,8,0,0,1-8-7.2l-5.6-56a8,8,0,0,1,15.92-1.6l5.6,56A8,8,0,0,1,81.6,184Zm54.4-8a8,8,0,0,1-16,0V120a8,8,0,0,1,16,0ZM89.63,80,128,36.15,166.37,80Zm99.13,40.8-5.6,56a8,8,0,0,1-7.95,7.2,7.32,7.32,0,0,1-.81,0,8,8,0,0,1-7.16-8.76l5.6-56a8,8,0,0,1,15.92,1.6Z\"/>"},"shopping-cart":{"v":"0 0 256 256","fill":1,"d":"<path d=\"M230.14,58.87A8,8,0,0,0,224,56H62.68L56.6,22.57A8,8,0,0,0,48.73,16H24a8,8,0,0,0,0,16h18L67.56,172.29a24,24,0,0,0,5.33,11.27,28,28,0,1,0,44.4,8.44h45.42A27.75,27.75,0,0,0,160,204a28,28,0,1,0,28-28H91.17a8,8,0,0,1-7.87-6.57L80.13,152h116a24,24,0,0,0,23.61-19.71l12.16-66.86A8,8,0,0,0,230.14,58.87ZM104,204a12,12,0,1,1-12-12A12,12,0,0,1,104,204Zm96,0a12,12,0,1,1-12-12A12,12,0,0,1,200,204Z\"/>"},"package":{"v":"0 0 256 256","fill":1,"d":"<path d=\"M223.68,66.15,135.68,18a15.88,15.88,0,0,0-15.36,0l-88,48.17a16,16,0,0,0-8.32,14v95.64a16,16,0,0,0,8.32,14l88,48.17a15.88,15.88,0,0,0,15.36,0l88-48.17a16,16,0,0,0,8.32-14V80.18A16,16,0,0,0,223.68,66.15ZM128,32l80.35,44L178.57,92.29l-80.35-44Zm0,88L47.65,76,81.56,57.43l80.35,44Zm88,55.85h0l-80,43.79V133.83l32-17.51V152a8,8,0,0,0,16,0V107.56l32-17.51v85.76Z\"/>"},"drop":{"v":"0 0 256 256","fill":1,"d":"<path d=\"M174,47.75a254.19,254.19,0,0,0-41.45-38.3,8,8,0,0,0-9.18,0A254.19,254.19,0,0,0,82,47.75C54.51,79.32,40,112.6,40,144a88,88,0,0,0,176,0C216,112.6,201.49,79.32,174,47.75Zm9.85,105.59a57.6,57.6,0,0,1-46.56,46.55A8.75,8.75,0,0,1,136,200a8,8,0,0,1-1.32-15.89c16.57-2.79,30.63-16.85,33.44-33.45a8,8,0,0,1,15.78,2.68Z\"/>"},"sparkle":{"v":"0 0 256 256","fill":1,"d":"<path d=\"M208,144a15.78,15.78,0,0,1-10.42,14.94L146,178l-19,51.62a15.92,15.92,0,0,1-29.88,0L78,178l-51.62-19a15.92,15.92,0,0,1,0-29.88L78,110l19-51.62a15.92,15.92,0,0,1,29.88,0L146,110l51.62,19A15.78,15.78,0,0,1,208,144ZM152,48h16V64a8,8,0,0,0,16,0V48h16a8,8,0,0,0,0-16H184V16a8,8,0,0,0-16,0V32H152a8,8,0,0,0,0,16Zm88,32h-8V72a8,8,0,0,0-16,0v8h-8a8,8,0,0,0,0,16h8v8a8,8,0,0,0,16,0V96h8a8,8,0,0,0,0-16Z\"/>"},"wind":{"v":"0 0 256 256","fill":1,"d":"<path d=\"M120,104H24a8,8,0,0,1-8-8.53A8.17,8.17,0,0,1,24.27,88H112a8,8,0,0,0,8-8.53A8.17,8.17,0,0,0,111.73,72H92.29a4,4,0,0,1-4-4.58A32,32,0,1,1,120,104Zm119.92-2.29a32,32,0,0,0-63.59-2.29,4,4,0,0,0,4,4.58h19.44a8.17,8.17,0,0,1,8.25,7.47,8,8,0,0,1-8,8.53H32.27A8.17,8.17,0,0,0,24,127.47,8,8,0,0,0,32,136H208A32,32,0,0,0,239.92,101.71ZM152,152H40.27A8.17,8.17,0,0,0,32,159.47,8,8,0,0,0,40,168H143.73a8.17,8.17,0,0,1,8.25,7.47,8,8,0,0,1-8,8.53H124.29a4,4,0,0,0-4,4.58A32,32,0,1,0,152,152Z\"/>"},"snowflake":{"v":"0 0 256 256","fill":1,"d":"<path d=\"M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm42.37,119.22,18.94-6.76a8,8,0,1,1,5.38,15.08l-15.48,5.52,4.52,16.87a8,8,0,0,1-5.66,9.8A8.23,8.23,0,0,1,176,184a8,8,0,0,1-7.73-5.93l-5.57-20.8L136,141.86v30.83l13.66,13.65a8,8,0,0,1-11.32,11.32L128,187.31l-10.34,10.35a8,8,0,0,1-11.32-11.32L120,172.69V141.86L93.3,157.27l-5.57,20.8A8,8,0,0,1,80,184a8.23,8.23,0,0,1-2.07-.27,8,8,0,0,1-5.66-9.8l4.52-16.87-15.48-5.52a8,8,0,0,1,5.38-15.08l18.94,6.76L112,128,85.63,112.78l-18.94,6.76A8.18,8.18,0,0,1,64,120a8,8,0,0,1-2.69-15.54l15.48-5.52L72.27,82.07a8,8,0,0,1,15.46-4.14l5.57,20.8L120,114.14V83.31L106.34,69.66a8,8,0,0,1,11.32-11.32L128,68.69l10.34-10.35a8,8,0,0,1,11.32,11.32L136,83.31v30.83l26.7-15.41,5.57-20.8a8,8,0,0,1,15.46,4.14l-4.52,16.87,15.48,5.52A8,8,0,0,1,192,120a8.18,8.18,0,0,1-2.69-.46l-18.94-6.76L144,128Z\"/>"},"towel":{"v":"0 0 256 256","fill":1,"d":"<path d=\"M224,48V152a8,8,0,0,1-8.53,8,8.17,8.17,0,0,1-7.47-8.25V48a8,8,0,0,0-8.55-8A8.19,8.19,0,0,0,192,48.28V180a4,4,0,0,1-4,4H52a4,4,0,0,1-4-4V48A24,24,0,0,1,72,24H200A24,24,0,0,1,224,48ZM188,200H52a4,4,0,0,0-4,4v12a16,16,0,0,0,16,16H176a16,16,0,0,0,16-16V204A4,4,0,0,0,188,200Z\"/>"},"oven":{"v":"0 0 256 256","fill":1,"d":"<path d=\"M208,32H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32ZM172,56a12,12,0,1,1-12,12A12,12,0,0,1,172,56Zm-44,0a12,12,0,1,1-12,12A12,12,0,0,1,128,56ZM84,56A12,12,0,1,1,72,68,12,12,0,0,1,84,56ZM192,192H64V104H192Z\"/>"},"feather":{"v":"0 0 256 256","fill":1,"d":"<path d=\"M211.84,134.81l-59.79,60.47,0,0a15.75,15.75,0,0,1-11.2,4.68H75.32L45.66,229.66a8,8,0,0,1-11.32-11.32l22.59-22.58h0L124.7,128H209A4,4,0,0,1,211.84,134.81ZM216.7,30.57a64,64,0,0,0-85.9,4.14l-9.6,9.48A4,4,0,0,0,120,47v63l55-55a8,8,0,0,1,11.31,11.31L140.71,112h88.38a4,4,0,0,0,3.56-2.16A64.08,64.08,0,0,0,216.7,30.57ZM62.83,167.23,104,126.06V70.76a4,4,0,0,0-6.81-2.84L60.69,104A15.9,15.9,0,0,0,56,115.31V164.4A4,4,0,0,0,62.83,167.23Z\"/>"},"archive":{"v":"0 0 256 256","fill":1,"d":"<path d=\"M224,48H32A16,16,0,0,0,16,64V88a16,16,0,0,0,16,16v88a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V104a16,16,0,0,0,16-16V64A16,16,0,0,0,224,48Zm-72,96H104a8,8,0,0,1,0-16h48a8,8,0,0,1,0,16Zm72-56H32V64H224V88Z\"/>"},"pill":{"v":"0 0 256 256","fill":1,"d":"<path d=\"M216.43,39.6a53.27,53.27,0,0,0-75.33,0L39.6,141.09a53.26,53.26,0,0,0,75.32,75.31L216.43,114.91A53.32,53.32,0,0,0,216.43,39.6Zm-11.32,64-50.75,50.74-52.69-52.68,50.75-50.75a37.26,37.26,0,0,1,52.69,52.69ZM189.68,82.34a8,8,0,0,1,0,11.32l-24,24a8,8,0,1,1-11.31-11.32l24-24A8,8,0,0,1,189.68,82.34Z\"/>"},"squares-four":{"v":"0 0 256 256","fill":1,"d":"<path d=\"M120,56v48a16,16,0,0,1-16,16H56a16,16,0,0,1-16-16V56A16,16,0,0,1,56,40h48A16,16,0,0,1,120,56Zm80-16H152a16,16,0,0,0-16,16v48a16,16,0,0,0,16,16h48a16,16,0,0,0,16-16V56A16,16,0,0,0,200,40Zm-96,96H56a16,16,0,0,0-16,16v48a16,16,0,0,0,16,16h48a16,16,0,0,0,16-16V152A16,16,0,0,0,104,136Zm96,0H152a16,16,0,0,0-16,16v48a16,16,0,0,0,16,16h48a16,16,0,0,0,16-16V152A16,16,0,0,0,200,136Z\"/>"},"jar":{"v":"0 0 256 256","fill":1,"d":"<path d=\"M184,48.81V32a16,16,0,0,0-16-16H88A16,16,0,0,0,72,32V48.81A40.05,40.05,0,0,0,40,88V200a40,40,0,0,0,40,40h96a40,40,0,0,0,40-40V88A40.05,40.05,0,0,0,184,48.81ZM120,48V32h16V48Zm48,0H152V32h16ZM104,32V48H88V32Z\"/>"},"tote":{"v":"0 0 256 256","fill":1,"d":"<path d=\"M236,69.4A16.13,16.13,0,0,0,223.92,64H176a48,48,0,0,0-96,0H32.08a16.13,16.13,0,0,0-12,5.4,16,16,0,0,0-3.92,12.48l14.26,120a16,16,0,0,0,16,14.12H209.67a16,16,0,0,0,16-14.12l14.26-120A16,16,0,0,0,236,69.4ZM96,104a8,8,0,0,1-16,0V88a8,8,0,0,1,16,0Zm32-72a32,32,0,0,1,32,32H96A32,32,0,0,1,128,32Zm48,72a8,8,0,0,1-16,0V88a8,8,0,0,1,16,0Z\"/>"},"tooth":{"v":"0 0 256 256","fill":1,"d":"<path d=\"M168,24H88A56,56,0,0,0,32,79.75c0,42.72,8,75.4,14.7,95.28,8.72,25.8,20.62,45.49,32.64,54A15.67,15.67,0,0,0,88.47,232a16.09,16.09,0,0,0,16-14.9c.85-11.52,5-49.11,23.53-49.11s22.68,37.59,23.53,49.11a16.09,16.09,0,0,0,9.18,13.36,15.69,15.69,0,0,0,15.95-1.41c12-8.53,23.92-28.22,32.64-54C216,155.15,224,122.47,224,79.75A56,56,0,0,0,168,24Zm3,56.57A8,8,0,1,1,165,95.42L128,80.61,91,95.42A8,8,0,1,1,85,80.57L106.46,72,85,63.42A8,8,0,1,1,91,48.57l37,14.81,37-14.81A8,8,0,1,1,171,63.42L149.54,72Z\"/>"},"sock":{"v":"0 0 256 256","fill":1,"d":"<path d=\"M192,16H104A16,16,0,0,0,88,32v76.69L49.25,147.43a58.92,58.92,0,0,0,83.32,83.32L201,162.34a23.85,23.85,0,0,0,7-17V32A16,16,0,0,0,192,16Zm0,16h0V56H104V32Zm-2.34,119L157.8,182.88a48,48,0,0,1,34.2-70.2v32.69A8,8,0,0,1,189.66,151Z\"/>"}};
+const NAV_ICONS = {
+ "today": "<path d=\"M3.5 5.5l1.5 1.5l2.5 -2.5\" /> <path d=\"M3.5 11.5l1.5 1.5l2.5 -2.5\" /> <path d=\"M3.5 17.5l1.5 1.5l2.5 -2.5\" /> <path d=\"M11 6l9 0\" /> <path d=\"M11 12l9 0\" /> <path d=\"M11 18l9 0\" />",
+ "week": "<path d=\"M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12z\" /> <path d=\"M16 3v4\" /> <path d=\"M8 3v4\" /> <path d=\"M4 11h16\" /> <path d=\"M7 14h.013\" /> <path d=\"M10.01 14h.005\" /> <path d=\"M13.01 14h.005\" /> <path d=\"M16.015 14h.005\" /> <path d=\"M13.015 17h.005\" /> <path d=\"M7.01 17h.005\" /> <path d=\"M10.01 17h.005\" />",
+ "chores": "<path d=\"M5 12l-2 0l9 -9l9 9l-2 0\" /> <path d=\"M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7\" /> <path d=\"M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6\" />",
+ "supplies": "<path d=\"M10 14a2 2 0 1 0 4 0a2 2 0 0 0 -4 0\" /> <path d=\"M5.001 8h13.999a2 2 0 0 1 1.977 2.304l-1.255 7.152a3 3 0 0 1 -2.966 2.544h-9.512a3 3 0 0 1 -2.965 -2.544l-1.255 -7.152a2 2 0 0 1 1.977 -2.304z\" /> <path d=\"M17 10l-2 -6\" /> <path d=\"M7 10l2 -6\" />"
+};
+const ICON_GUESS = [[/pill|tablet|capsule/, "pill"], [/salt/, "jar"], [/dish ?washer|dishes|plates/, "fork-knife"], [/counter|stove|wipe|spray|clean(er)?$/, "spray-bottle"], [/trash|bin|rubbish|garbage/, "trash"], [/laundry|wash(ing)? machine|load/, "washing-machine"],
+  [/vacuum|sweep|hoover/, "broom"], [/mop|floor/, "drop"], [/toilet paper|paper towel|tissue/, "toilet-paper"], [/toilet|bathroom|loo/, "toilet"], [/shower|bath/, "shower"], [/bed|sheet|duvet|pillow/, "bed"], [/towel/, "towel"],
+  [/dust/, "feather"], [/fridge|freezer/, "snowflake"], [/oven|microwave|cook|hob/, "oven"], [/window|mirror|glass/, "squares-four"], [/declutter|drawer|shelf|sort/, "archive"], [/iron|clothes|fold/, "t-shirt"],
+  [/hand soap|soap/, "hand-soap"], [/sponge|cloth/, "package"], [/bag/, "tote"], [/detergent|softener|bleach/, "toner"], [/gel|shampoo|conditioner/, "pump-bottle"],
+  [/toothpaste/, "tube"], [/tooth/, "tooth"], [/sock/, "sock"], [/rinse|liquid|bottle/, "bottle"]];
+const STARTER_ICON = { "tidy": "sparkle", "trash": "trash", "fridge-clean": "snowflake", "dish-soap": "pump-bottle", "rinse-aid": "bottle", "laundry-detergent": "toner", "fabric-softener": "bottle", "washer-cleaner": "toner", "toilet-cleaner": "spray-bottle", "bathroom-cleaner": "spray-bottle", "surface-spray": "spray-bottle", "sponges": "package" };
+const guessIcon = (name, fallback) => (ICON_GUESS.find(([re]) => re.test(name.toLowerCase())) || [0, fallback])[1];
+const iconOf = (x, kind) => ICONS[x.icon] ? x.icon : guessIcon(x.name, kind === "supply" ? "package" : "sparkle");
+const svgIcon = name => { const i = ICONS[name] || ICONS.sparkle; return i.fill === 2
+  ? `<svg viewBox="${i.v}" fill="none" aria-hidden="true">${i.d}</svg>`
+  : `<svg viewBox="${i.v}" fill="currentColor" aria-hidden="true">${i.d}</svg>` };
+const thumb = (x, kind, size = 40) => `<span class="thumb icon" style="width:${size}px;height:${size}px;--c:var(--s${tintOf(x.area)})" aria-hidden="true">${svgIcon(iconOf(x, kind))}</span>`;
+const miniIcon = (x, kind) => `<span class="mini-icon" style="--c:var(--s${tintOf(x.area)})">${svgIcon(iconOf(x, kind))}</span>`;
+function toast(msg) { const t = document.getElementById("toast"); t.textContent = msg; t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => t.hidden = true, 3200) }
+function setStatus(s) { document.getElementById("status").textContent = s }
+
+/* ---------- schedule ----------
+   A chore keeps its next due date (due) and the days it was done (done, newest last).
+   Ticking it today moves due to today + every; unticking puts the old due date back. */
+const doneOn = (c, k) => (c.done || []).includes(k);
+const doneToday = c => doneOn(c, todayKey());
+const isDue = c => c.due <= todayKey();
+const lateBy = c => dayNum(todayKey()) - dayNum(c.due);
+function dueOn(c, k) {
+  const t = todayKey(); if (k < t) return false;
+  const base = c.due < t ? (doneToday(c) ? c.due : t) : c.due, n = dayNum(k) - dayNum(base);
+  return n >= 0 && n % Math.max(1, c.every) === 0;
+}
+function todayList() { return chores().filter(c => isDue(c) || doneToday(c)) }
+function tick(id) {
+  const c = { ...state.chores[id] }, t = todayKey(), done = (c.done || []).filter(k => k !== t);
+  if (doneToday(c)) { c.due = c.prevDue || t; delete c.prevDue }
+  else { c.prevDue = c.due; c.due = keyAdd(t, c.every); done.push(t) }
+  c.done = done.slice(-40); saveItem("chores", c);
+}
+function later(id) { const c = { ...state.chores[id] }; c.due = keyAdd(todayKey(), 1); saveItem("chores", c); toast(`Moved “${c.name}” to tomorrow.`) }
+/* Starter chores are spread out so the first day isn't everything at once. */
+function staggered(list) {
+  const t = todayKey(), seen = {}, total = {};
+  list.forEach(c => total[c.every] = (total[c.every] || 0) + 1);
+  return list.map(c => { const j = seen[c.every] = (seen[c.every] ?? -1) + 1; return { ...c, due: keyAdd(t, c.every === 1 ? 0 : Math.floor(j * c.every / total[c.every])) } });
+}
+
+/* ---------- supplies ----------
+   low = on the shopping list. bought = the last day it was bought, which drives the "running out soon" hints. */
+const runsOutOn = s => s.bought && s.lasts ? keyAdd(s.bought, s.lasts) : null;
+const soon = s => !s.low && runsOutOn(s) && dayNum(runsOutOn(s)) - dayNum(todayKey()) <= 5;
+function setLow(id, low) { const s = { ...state.supplies[id], low }; if (!low) delete s.low; saveItem("supplies", s) }
+function bought(id) { const s = { ...state.supplies[id], bought: todayKey() }; delete s.low; saveItem("supplies", s); toast(`Marked ${s.name} as bought. It's off your shopping list.`) }
+const shoppingList = () => [...supplies().filter(s => s.low).map(s => ({ ...s, kind: "supply" })), ...Object.values(state.shopping).sort((a, b) => a.added - b.added).map(x => ({ ...x, kind: "extra" }))];
+
+/* ---------- storage ---------- */
+const LKEY = "household-diary-v1";
+function loadLocal() {
+  let data = {};
+  try { data = JSON.parse(localStorage.getItem(LKEY) || "{}") } catch (e) {}
+  state.chores = data.chores || {}; state.supplies = data.supplies || {}; state.shopping = data.shopping || {};
+  state.loaded = true; state.mode = "local";
+  setStatus("Your household diary is saved in this browser on this device.");
+  render();
+}
+function persistLocal() { try { localStorage.setItem(LKEY, JSON.stringify({ chores: state.chores, supplies: state.supplies, shopping: state.shopping })) } catch (e) { toast("Couldn't save on this device. Free up some browser storage and try again.") } }
+const chains = {};
+function queue(path, fn) {
+  chains[path] = (chains[path] || Promise.resolve()).then(fn)
+    .catch(e => toast(e?.code === "quota_exceeded" ? "Storage is full. Remove some chores or supplies and try again." : "Couldn't save that change. Check your connection and try again."));
+}
+function saveItem(coll, item) {
+  state[coll][item.id] = item;
+  if (state.mode === "db") queue(coll + "/" + item.id, () => db.doc(coll + "/" + item.id).set(item)); else persistLocal();
+  render();
+}
+function removeItem(coll, id) {
+  delete state[coll][id];
+  if (state.mode === "db") queue(coll + "/" + id, () => db.doc(coll + "/" + id).delete()); else persistLocal();
+  render();
+}
+function useStarter() {
+  const cs = staggered(STARTER.chores.map(([id, name, area, every]) => ({ id, name, area, every, ...(STARTER_ICON[id] ? { icon: STARTER_ICON[id] } : {}), done: [] })));
+  const ss = STARTER.supplies.map(([id, name, area, lasts]) => ({ id, name, area, lasts, ...(STARTER_ICON[id] ? { icon: STARTER_ICON[id] } : {}) }));
+  cs.forEach(c => { if (!state.chores[c.id]) saveItem("chores", c) });
+  ss.forEach(s => { if (!state.supplies[s.id]) saveItem("supplies", s) });
+  toast(`Added ${cs.length} chores and ${ss.length} supplies. Change or remove any of them under Chores and Supplies.`);
+}
+
+/* ---------- render ---------- */
+function render() {
+  const tab = state.tab;
+  document.querySelectorAll(".bottom-nav button").forEach(b => b.setAttribute("aria-current", b.dataset.tab === tab ? "page" : "false"));
+  document.querySelectorAll("nav.tabs button").forEach(b => b.setAttribute("aria-selected", b.dataset.tab === tab));
+  const main = document.getElementById("main"), a = document.activeElement;
+  if (main.contains(a) && a.matches("input:not([type=checkbox]), textarea")) { renderSheet(); return }
+  const empty = !Object.keys(state.chores).length && !Object.keys(state.supplies).length;
+  if (!state.loaded) main.innerHTML = `<div class="glass empty-state"><p class="muted">Loading your household diary…</p></div>`;
+  else if (empty && tab !== "chores" && tab !== "supplies") main.innerHTML = emptyState();
+  else if (tab === "today") main.innerHTML = renderToday();
+  else if (tab === "week") main.innerHTML = renderWeek();
+  else if (tab === "chores") main.innerHTML = renderChores();
+  else main.innerHTML = renderSupplies();
+  renderSheet();
+}
+function emptyState() {
+  return `<div class="glass empty-state"><h2>Welcome to your <em>household diary</em></h2><p class="muted">Plan your chores, tick them off as you go, and keep track of the things you need to buy. Start with a typical list and trim it, or add your own one at a time.</p>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center"><button class="btn primary" data-act="starter">Use the starter list</button><button class="btn" data-act="new-chore">Add a chore</button></div></div>`;
+}
+function choreRow(c) {
+  const d = doneToday(c), late = !d && lateBy(c) > 0;
+  const sub = d ? `Done · next ${when(c.due)}` : late ? `<span class="late">${lateBy(c) === 1 ? "Since yesterday" : `${lateBy(c)} days overdue`}</span> · ${freqLabel(c.every).toLowerCase()}` : freqLabel(c.every);
+  return `<li class="${d ? "done" : ""}"><label class="step">
+    <input type="checkbox" data-act="tick" data-id="${c.id}"${d ? " checked" : ""} aria-label="${esc(c.name)}">
+    ${thumb(c, "chore", 40)}<span class="txt"><span class="nm">${esc(c.name)}</span><span class="sub">${sub}</span></span></label>
+    ${d ? "" : `<button class="skip-btn" data-act="later" data-id="${c.id}">Tomorrow</button>`}</li>`;
+}
+function renderToday() {
+  const k = todayKey(), d = fromKey(k), list = todayList(), doneN = list.filter(doneToday).length;
+  const groups = byArea(list).map(([area, cs]) => `<div class="area" style="--c:var(--s${tintOf(area)})">
+    <div class="area-head"><h3>${esc(area)}</h3><span class="count">${cs.filter(doneToday).length} of ${cs.length}</span></div>
+    <ol class="steps">${cs.map(choreRow).join("")}</ol></div>`).join("");
+  const next = chores().filter(c => !isDue(c) && !doneToday(c)).sort((a, b) => a.due.localeCompare(b.due))[0];
+  const shop = shoppingList(), hints = supplies().filter(soon);
+  const lowCard = shop.length || hints.length ? `<div class="low-card"><span class="eyebrow">Shopping list</span>
+      ${shop.length ? `<ul>${shop.slice(0, 6).map(s => `<li>${s.kind === "supply" ? miniIcon(s, "supply") : `<span class="dot" aria-hidden="true"></span>`}<span>${esc(s.name)}</span></li>`).join("")}</ul>${shop.length > 6 ? `<span class="muted" style="font-size:13px">and ${shop.length - 6} more</span>` : ""}` : ""}
+      ${hints.length ? `<span class="muted" style="font-size:13px">${hints.length === 1 ? esc(hints[0].name) + " may" : hints.length + " things may"} run out soon.</span>` : ""}
+      <button class="btn small" data-act="tab" data-tab="supplies" style="justify-self:start">Open supplies</button></div>` : "";
+  return `<section class="glass today" aria-label="Today">
+    <div class="today-intro">
+      <div style="display:grid;gap:6px"><span class="eyebrow">Today</span>
+        <div class="date">${DOW[d.getDay()]}<br><em>${d.toLocaleDateString(undefined, { day: "numeric", month: "long" })}</em></div></div>
+      ${list.length ? `<div class="progress">${doneN === list.length ? `<span class="complete-badge">✓ All done for today</span>` : `<span>${doneN} of ${list.length} done</span>`}
+        <div class="bar" style="width:min(220px,100%)"><span style="width:${doneN / list.length * 100}%"></span></div></div>` : ""}
+      ${lowCard}
+    </div>
+    ${list.length ? `<div class="areas">${groups}</div>` : `<div class="all-done"><h3>Nothing due today</h3><p class="muted">${next ? `Next up: ${esc(next.name)}, ${when(next.due)}.` : "Add a chore to get started."}</p></div>`}
+  </section>`;
+}
+function renderWeek() {
+  const ws = state.weekStart, we = addDays(ws, 6), tk = todayKey();
+  const fmt = d => d.toLocaleDateString(undefined, { day: "numeric", month: "short" });
+  let cells = "";
+  for (let i = 0; i < 7; i++) {
+    const d = addDays(ws, i), k = keyOf(d), past = k < tk;
+    const list = k === tk ? todayList() : chores().filter(c => past ? doneOn(c, k) : dueOn(c, k));
+    const allDone = list.length && (past || list.every(c => doneOn(c, k)));
+    const items = list.length ? `<ol>${list.map(c => { const dn = doneOn(c, k), late = k === tk && !dn && lateBy(c) > 0;
+      return `<li class="${dn ? "done" : ""}">${miniIcon(c, "chore")}<span>${esc(c.name)}</span>${dn ? `<span class="tick" aria-label="done">✓</span>` : late ? `<span class="tick late" aria-label="overdue">!</span>` : ""}</li>` }).join("")}</ol>`
+      : `<div class="empty">${past ? "Nothing ticked" : "Nothing due"}</div>`;
+    cells += `<div class="glass day${k === tk ? " is-today" : past ? " is-past" : ""}${allDone && !past ? " is-complete" : ""}">
+      <div class="day-head"><span class="dow">${DOW[d.getDay()].slice(0, 3)}</span><span class="num">${d.getDate()}</span></div>
+      ${allDone && !past ? `<span class="complete-badge small">✓ All done</span>` : ""}${items}</div>`;
+  }
+  const used = [...new Set(chores().map(c => c.area))];
+  return `<section style="display:grid;gap:14px">
+    <div class="weekbar"><h2>${fmt(ws)} – ${fmt(we)}</h2>
+      <div class="pager"><button class="btn small" data-act="week" data-n="-1" aria-label="Previous week">←</button>
+      <button class="btn small" data-act="week" data-n="0">This week</button>
+      <button class="btn small" data-act="week" data-n="1" aria-label="Next week">→</button></div></div>
+    <div class="week">${cells}</div>
+    <div class="legend">${used.map(a => `<span><span class="dot" style="--c:var(--s${tintOf(a)})"></span>${esc(a)}</span>`).join("")}<span>Past days show what you ticked. Coming days show what's planned.</span></div>
+  </section>`;
+}
+function renderChores() {
+  const groups = byArea(chores()).map(([area, cs]) => `<div class="group"><span class="eyebrow"><span class="dot" style="--c:var(--s${tintOf(area)})"></span>${esc(area)}</span>
+    ${cs.map(c => `<div class="row"><button class="row-main" data-act="edit-chore" data-id="${c.id}" aria-label="Edit ${esc(c.name)}">${thumb(c, "chore", 48)}
+      <span style="min-width:0"><span class="nm" style="display:block">${esc(c.name)}</span><span class="meta">${freqLabel(c.every)} · ${doneToday(c) ? "done today" : isDue(c) ? "due today" : "next " + when(c.due)}</span></span></button></div>`).join("")}</div>`).join("");
+  return `<section class="glass panel"><div class="panel-head"><h2>Your <em>chores</em></h2><button class="btn primary small" data-act="new-chore">Add a chore</button></div>
+      <p class="muted" style="margin:0;max-width:62ch">Each chore comes back on its own schedule, counted from the day you last ticked it. Tap a chore to change how often, move the next date, or remove it.</p>
+      ${groups || `<p class="muted" style="margin:0">No chores yet. <button class="btn small" data-act="starter">Use the starter list</button></p>`}</section>
+    ${backupPanel()}`;
+}
+function renderSupplies() {
+  const shop = shoppingList(), hints = supplies().filter(soon);
+  const shopRows = shop.map(x => `<label class="step"><input type="checkbox" data-act="${x.kind === "supply" ? "bought" : "extra-done"}" data-id="${x.id}" aria-label="Bought ${esc(x.name)}">
+    ${x.kind === "supply" ? thumb(x, "supply", 34) : thumb({ name: x.name, area: "", icon: "basket" }, "supply", 34)}<span class="txt"><span class="nm">${esc(x.name)}</span><span class="sub">${x.kind === "supply" ? esc(x.area) : "Added by hand"}</span></span></label>`).join("");
+  const hintRows = hints.map(s => `<div class="hint">${thumb(s, "supply", 34)}<span>${esc(s.name)}<span class="sub">Bought ${when(s.bought)}, usually lasts ${lastsLabel(s.lasts)}</span></span><button class="btn small" data-act="low" data-id="${s.id}">Add to list</button></div>`).join("");
+  const groups = byArea(supplies()).map(([area, ss]) => `<div class="group"><span class="eyebrow"><span class="dot" style="--c:var(--s${tintOf(area)})"></span>${esc(area)}</span>
+    ${ss.map(s => `<div class="row${s.low ? " is-low" : ""}"><button class="row-main" data-act="edit-supply" data-id="${s.id}" aria-label="Edit ${esc(s.name)}">${thumb(s, "supply", 48)}
+      <span style="min-width:0"><span class="nm" style="display:block">${esc(s.name)}</span><span class="meta">${s.bought ? `Bought ${when(s.bought)} · ` : ""}lasts ${lastsLabel(s.lasts)}</span></span></button>
+      <button class="low-btn" data-act="low" data-id="${s.id}" aria-pressed="${!!s.low}">${s.low ? "On the list" : "Running low"}</button></div>`).join("")}</div>`).join("");
+  return `<section class="glass panel"><div class="panel-head"><h2>Shopping <em>list</em></h2>${shop.length ? `<button class="btn small" data-act="copy-list">Copy list</button>` : ""}</div>
+      ${shop.length ? `<div class="shop">${shopRows}</div><p class="muted" style="margin:0;font-size:13px">Tick things off as you buy them.</p>` : `<p class="muted" style="margin:0">Nothing to buy. Tap “Running low” on any supply below to add it here.</p>`}
+      ${hintRows ? `<div style="display:grid;gap:6px"><span class="eyebrow">May run out soon</span>${hintRows}</div>` : ""}
+      <form class="add-line" id="extraForm"><input class="input" id="extra-name" placeholder="Add something else, e.g. light bulbs" aria-label="Add something else to the list"><button class="btn" type="submit">Add</button></form>
+    </section>
+    <section class="glass panel"><div class="panel-head"><h2>Your <em>supplies</em></h2><button class="btn primary small" data-act="new-supply">Add a supply</button></div>
+      <p class="muted" style="margin:0;max-width:62ch">Tap “Running low” to put something on the shopping list, or tap a supply to edit it. After you tick something off as bought, the app reminds you a few days before it usually runs out.</p>
+      ${groups || `<p class="muted" style="margin:0">No supplies yet. <button class="btn small" data-act="starter">Use the starter list</button></p>`}</section>`;
+}
+function backupPanel() {
+  if (state.mode !== "local") return "";
+  return `<section class="glass panel"><h2>Backup</h2>
+    <p class="muted" style="margin:0;max-width:62ch">Your household diary is saved on this device only. Save a backup file now and then, and use it to move to another phone or browser.</p>
+    <div style="display:flex;flex-wrap:wrap;gap:8px"><button class="btn primary" data-act="backup">Save backup file</button>
+      <label class="btn" style="cursor:pointer">Restore from backup<input type="file" accept="application/json,.json" data-act="restore" hidden></label></div></section>`;
+}
+
+/* ---------- sheet: add or edit a chore or a supply ---------- */
+function draftFrom(kind, x) { return kind === "chore" ? { name: x.name, area: x.area, every: x.every, due: x.due, icon: x.icon || "" } : { name: x.name, area: x.area, lasts: x.lasts, bought: x.bought || "", icon: x.icon || "" } }
+function readForm() {
+  const s = state.sheet, f = document.getElementById("itemForm"); if (!s || !f) return;
+  const v = id => f.querySelector("#" + id)?.value ?? "";
+  s.draft.name = v("i-name"); s.draft.area = v("i-area");
+  if (s.kind === "chore") { s.draft.every = +v("i-every") || s.draft.every; s.draft.due = v("i-due") || s.draft.due }
+  else { s.draft.lasts = +v("i-lasts") || s.draft.lasts; s.draft.bought = v("i-bought") }
+}
+function options(list, cur) { const has = list.some(([n]) => n === cur); return (has ? list : [...list, [cur, `Every ${cur} days`]]).map(([n, l]) => `<option value="${n}"${n === cur ? " selected" : ""}>${l}</option>`).join("") }
+function renderSheet() {
+  const root = document.getElementById("sheetRoot"), s = state.sheet;
+  if (!s) { root.innerHTML = ""; return }
+  const a = document.activeElement;
+  if (root.contains(a) && a.matches("input:not([type=checkbox]), select")) return;
+  readForm();
+  const d = s.draft, chore = s.kind === "chore", preview = { ...d, area: d.area || "Home" };
+  const title = s.id ? d.name || (chore ? "Chore" : "Supply") : chore ? "New chore" : "New supply";
+  root.innerHTML = `<div class="scrim" data-act="close"></div><aside class="sheet" role="dialog" aria-modal="true" aria-label="${esc(title)}">
+    <div class="sheet-head"><div style="display:grid;gap:4px"><span class="eyebrow">${chore ? "Chore" : "Supply"}</span><h2>${esc(title)}</h2></div><button class="btn small" data-act="close" aria-label="Close">Close</button></div>
+    <form class="sheet-body" id="itemForm">
+      <label class="field">${chore ? "What needs doing" : "What it is"}<input class="input" id="i-name" value="${esc(d.name)}" required placeholder="${chore ? "e.g. Water the balcony plants" : "e.g. Dishwasher pills"}"></label>
+      <div class="form-grid">
+        <label class="field">Area<input class="input" id="i-area" list="area-list" value="${esc(d.area)}" placeholder="e.g. Kitchen"><datalist id="area-list">${areas().map(x => `<option value="${esc(x)}">`).join("")}</datalist></label>
+        ${chore ? `<label class="field">How often<select class="input" id="i-every">${options(FREQS, d.every)}</select></label>
+          <label class="field">Next due<input class="input" type="date" id="i-due" value="${esc(d.due)}"></label>`
+        : `<label class="field">One usually lasts<select class="input" id="i-lasts">${options(LASTS, d.lasts).replace(/Every (\d+) days/, "About $1 days")}</select></label>
+          <label class="field">Last bought<input class="input" type="date" id="i-bought" value="${esc(d.bought)}"></label>`}
+      </div>
+      <div class="field">Icon<div class="icon-grid" role="group" aria-label="Pick an icon">${Object.keys(ICONS).map(n => `<button type="button" data-act="icon-set" data-icon="${n}" title="${n.replace(/-/g, " ")}" aria-pressed="${iconOf(preview, s.kind) === n}" style="--c:var(--s${tintOf(preview.area)})">${svgIcon(n)}</button>`).join("")}</div></div>
+      <div class="sheet-foot"><button class="btn primary" type="submit">${s.id ? "Save" : chore ? "Add chore" : "Add supply"}</button>
+        <span class="spacer"></span>${s.id ? s.confirm ? `<button class="btn small danger" type="button" data-act="remove-yes">Remove</button><button class="btn small ghost" type="button" data-act="remove-no">Keep</button>` : `<button class="btn small ghost" type="button" data-act="remove">Remove</button>` : ""}</div>
+    </form></aside>`;
+}
+function openSheet(kind, id) {
+  const x = id ? (kind === "chore" ? state.chores : state.supplies)[id] : kind === "chore" ? { name: "", area: "", every: 7, due: todayKey() } : { name: "", area: "", lasts: 30 };
+  state.sheet = { kind, id, draft: draftFrom(kind, x) }; render();
+  if (!id) document.getElementById("i-name")?.focus();
+}
+function submitSheet() {
+  readForm();
+  const s = state.sheet, d = s.draft, name = d.name.trim(), area = d.area.trim() || "Home";
+  if (!name) { toast(s.kind === "chore" ? "Give the chore a name first." : "Give the supply a name first."); return }
+  if (s.kind === "chore") {
+    const c = s.id ? { ...state.chores[s.id] } : { id: newId("c"), done: [] };
+    Object.assign(c, { name, area, every: d.every, due: d.due || todayKey() }); d.icon ? c.icon = d.icon : delete c.icon;
+    saveItem("chores", c); toast(s.id ? "Saved." : `Added “${name}”. It's next due ${when(c.due)}.`);
+  } else {
+    const x = s.id ? { ...state.supplies[s.id] } : { id: newId("s") };
+    Object.assign(x, { name, area, lasts: d.lasts }); d.bought ? x.bought = d.bought : delete x.bought; d.icon ? x.icon = d.icon : delete x.icon;
+    saveItem("supplies", x); toast(s.id ? "Saved." : `Added ${name}. Tap “Running low” when it's time to buy more.`);
+  }
+  state.sheet = null; render();
+}
+
+/* ---------- events ---------- */
+document.addEventListener("click", e => {
+  const el = e.target.closest("[data-act]"); if (!el) return;
+  const act = el.dataset.act, id = el.dataset.id;
+  if (act === "tab") { state.tab = el.dataset.tab; state.sheet = null; render(); window.scrollTo(0, 0) }
+  else if (act === "week") { const n = +el.dataset.n; state.weekStart = n ? addDays(state.weekStart, 7 * n) : mondayOf(new Date()); render() }
+  else if (act === "later") later(id);
+  else if (act === "low") { const s = state.supplies[id]; setLow(id, !s.low); if (!s.low) toast(`Added ${s.name} to your shopping list.`) }
+  else if (act === "starter") useStarter();
+  else if (act === "new-chore") openSheet("chore");
+  else if (act === "new-supply") openSheet("supply");
+  else if (act === "edit-chore") openSheet("chore", id);
+  else if (act === "edit-supply") openSheet("supply", id);
+  else if (act === "close") { state.sheet = null; render() }
+  else if (act === "icon-set") { readForm(); state.sheet.draft.icon = el.dataset.icon; renderSheet() }
+  else if (act === "remove") { readForm(); state.sheet.confirm = true; renderSheet() }
+  else if (act === "remove-no") { readForm(); state.sheet.confirm = false; renderSheet() }
+  else if (act === "remove-yes") { const s = state.sheet, name = s.draft.name; state.sheet = null; removeItem(s.kind === "chore" ? "chores" : "supplies", s.id); toast(`Removed “${name}”.`) }
+  else if (act === "copy-list") copyList();
+  else if (act === "backup") saveBackup();
+});
+document.addEventListener("change", e => {
+  const el = e.target, act = el.dataset.act, id = el.dataset.id;
+  if (act === "tick") tick(id);
+  else if (act === "bought") bought(id);
+  else if (act === "extra-done") { const x = state.shopping[id]; removeItem("shopping", id); toast(`Ticked off ${x?.name || "that"}.`) }
+  else if (act === "restore" && el.files?.[0]) restoreBackup(el.files[0]);
+  else if (el.id === "i-area") { readForm(); renderSheet() }
+});
+document.addEventListener("focusout", e => { if (e.target.id === "i-area" || e.target.id === "i-name") setTimeout(renderSheet, 0) });
+document.addEventListener("keydown", e => { if (e.key === "Escape" && state.sheet) { state.sheet = null; render() } });
+document.addEventListener("submit", e => {
+  e.preventDefault();
+  if (e.target.id === "itemForm") { document.activeElement?.blur(); submitSheet() }
+  else if (e.target.id === "extraForm") {
+    const inp = document.getElementById("extra-name"), name = inp.value.trim(); if (!name) return;
+    inp.value = ""; inp.blur(); const x = { id: newId("x"), name, added: Date.now() }; saveItem("shopping", x); toast(`Added ${name} to your shopping list.`);
+  }
+});
+async function copyList() {
+  const text = shoppingList().map(x => "• " + x.name).join("\n");
+  try {
+    if (navigator.share && isMobile()) await navigator.share({ title: "Shopping list", text });
+    else { await navigator.clipboard.writeText(text); toast("Copied your shopping list. Paste it into a message or your notes.") }
+  } catch (err) { if (err?.name !== "AbortError") toast("Couldn't copy the list. Select the items and copy them by hand.") }
+}
+function saveBackup() {
+  const blob = new Blob([JSON.stringify({ app: "household-diary", version: 1, savedAt: new Date().toISOString(), chores: state.chores, supplies: state.supplies, shopping: state.shopping }, null, 1)], { type: "application/json" });
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `household-diary-backup-${todayKey()}.json`;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+async function restoreBackup(file) {
+  try {
+    const data = JSON.parse(await file.text());
+    if (data?.app !== "household-diary" || typeof data.chores !== "object") throw new Error("not a backup");
+    state.chores = data.chores || {}; state.supplies = data.supplies || {}; state.shopping = data.shopping || {}; persistLocal(); render(); toast("Household diary restored.");
+  } catch (e) { toast("That file isn't a Household Diary backup.") }
+}
+
+/* ---------- boot ---------- */
+const mobileMQ = window.matchMedia("(max-width: 700px)");
+const isMobile = () => mobileMQ.matches;
+document.querySelectorAll("[data-nav]").forEach(svg => svg.innerHTML = NAV_ICONS[svg.dataset.nav]);
+/* Re-render after midnight so "today" moves on while the app stays open. */
+let shownDay = todayKey();
+setInterval(() => { if (todayKey() !== shownDay) { shownDay = todayKey(); render() } }, 60000);
+document.addEventListener("visibilitychange", () => { if (!document.hidden && todayKey() !== shownDay) { shownDay = todayKey(); render() } });
+render();
+(async () => {
+  try { db = window.claude?.use ? await window.claude.use("db") : null } catch (e) { db = null }
+  if (!db) { loadLocal(); return }
+  state.mode = "db";
+  const lost = () => setStatus("Lost the connection to your saved household diary. Reload the page to reconnect.");
+  let pending = 3;
+  for (const coll of ["chores", "supplies", "shopping"]) {
+    db.collection(coll).onSnapshot(q => {
+      const d = {}; q.docs.forEach(x => d[x.id] = { ...x.data(), id: x.id }); state[coll] = d;
+      if (pending > 0 && --pending === 0) state.loaded = true;
+      render();
+    }, lost);
+  }
+})();
+</script>
+
+<script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});</script>
+</body>
+</html>
