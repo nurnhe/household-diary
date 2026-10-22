@@ -9,8 +9,8 @@ head = """<!doctype html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Household Diary</title>
-<meta name="theme-color" content="#FBF4F7" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#17111C" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#F4F1EA" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#141A17" media="(prefers-color-scheme: dark)">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Household Diary">
