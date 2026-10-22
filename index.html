@@ -222,7 +222,9 @@ nav.tabs button[aria-selected="true"] { color: var(--accent); border-color: var(
 .sheet-foot { display: flex; flex-wrap: wrap; gap: 8px; align-items: center }
 .sheet-foot .spacer { margin-right: auto }
 .status { font-size: 12px; color: var(--muted); margin: 0 }
-.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(18px + env(safe-area-inset-bottom, 0px)); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 12px; font-size: 14px; font-weight: 500; z-index: 30; box-shadow: var(--shadow-lg); max-width: calc(100% - 32px) }
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(18px + env(safe-area-inset-bottom, 0px)); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 12px; font-size: 14px; font-weight: 500; z-index: 30; box-shadow: var(--shadow-lg); width: max-content; max-width: calc(100% - 32px); display: flex; align-items: center; gap: 12px }
+.toast[hidden] { display: none }
+.toast button { flex: none; border: 0; background: none; color: var(--sun); font-weight: 800; padding: 6px 4px; margin: -6px -4px -6px 0 }
 @media (max-width: 700px) { .toast { bottom: calc(80px + env(safe-area-inset-bottom, 0px)) } }
 @media (prefers-reduced-motion: no-preference) {
   .sheet { animation: slide .25s cubic-bezier(.2, .8, .2, 1) } @keyframes slide { from { transform: translateX(40px); opacity: .5 } }
@@ -327,7 +329,12 @@ const svgIcon = name => { const i = ICONS[name] || ICONS.sparkle; return i.fill 
   : `<svg viewBox="${i.v}" fill="currentColor" aria-hidden="true">${i.d}</svg>` };
 const thumb = (x, kind, size = 40) => `<span class="thumb icon" style="width:${size}px;height:${size}px;--c:var(--s${tintOf(x.area)})" aria-hidden="true">${svgIcon(iconOf(x, kind))}</span>`;
 const miniIcon = (x, kind) => `<span class="mini-icon" style="--c:var(--s${tintOf(x.area)})">${svgIcon(iconOf(x, kind))}</span>`;
-function toast(msg) { const t = document.getElementById("toast"); t.textContent = msg; t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => t.hidden = true, 3200) }
+/* A toast can offer Undo, which puts back whatever the last action changed. */
+function toast(msg, undo) {
+  const t = document.getElementById("toast"); toast.undo = undo || null;
+  t.innerHTML = `<span>${esc(msg)}</span>${undo ? `<button data-act="undo">Undo</button>` : ""}`; t.hidden = false;
+  clearTimeout(toast.t); toast.t = setTimeout(() => { t.hidden = true; toast.undo = null }, undo ? 6000 : 3200);
+}
 function setStatus(s) { document.getElementById("status").textContent = s }
 
 /* ---------- schedule ----------
@@ -349,7 +356,7 @@ function tick(id) {
   else { c.prevDue = c.due; c.due = keyAdd(t, c.every); done.push(t) }
   c.done = done.slice(-40); saveItem("chores", c);
 }
-function later(id) { const c = { ...state.chores[id] }; c.due = keyAdd(todayKey(), 1); saveItem("chores", c); toast(`Moved “${c.name}” to tomorrow.`) }
+function later(id) { const prev = state.chores[id], c = { ...prev, due: keyAdd(todayKey(), 1) }; saveItem("chores", c); toast(`Moved “${c.name}” to tomorrow.`, () => saveItem("chores", prev)) }
 /* Starter chores are spread out so the first day isn't everything at once. */
 function staggered(list) {
   const t = todayKey(), seen = {}, total = {};
@@ -362,7 +369,7 @@ function staggered(list) {
 const runsOutOn = s => s.bought && s.lasts ? keyAdd(s.bought, s.lasts) : null;
 const soon = s => !s.low && runsOutOn(s) && dayNum(runsOutOn(s)) - dayNum(todayKey()) <= 5;
 function setLow(id, low) { const s = { ...state.supplies[id], low }; if (!low) delete s.low; saveItem("supplies", s) }
-function bought(id) { const s = { ...state.supplies[id], bought: todayKey() }; delete s.low; saveItem("supplies", s); toast(`Marked ${s.name} as bought. It's off your shopping list.`) }
+function bought(id) { const prev = state.supplies[id], s = { ...prev, bought: todayKey() }; delete s.low; saveItem("supplies", s); toast(`Marked ${s.name} as bought. It's off your shopping list.`, () => saveItem("supplies", prev)) }
 const shoppingList = () => [...supplies().filter(s => s.low).map(s => ({ ...s, kind: "supply" })), ...Object.values(state.shopping).sort((a, b) => a.added - b.added).map(x => ({ ...x, kind: "extra" }))];
 
 /* ---------- storage ---------- */
@@ -581,7 +588,8 @@ document.addEventListener("click", e => {
   else if (act === "icon-set") { readForm(); state.sheet.draft.icon = el.dataset.icon; renderSheet() }
   else if (act === "remove") { readForm(); state.sheet.confirm = true; renderSheet() }
   else if (act === "remove-no") { readForm(); state.sheet.confirm = false; renderSheet() }
-  else if (act === "remove-yes") { const s = state.sheet, name = s.draft.name; state.sheet = null; removeItem(s.kind === "chore" ? "chores" : "supplies", s.id); toast(`Removed “${name}”.`) }
+  else if (act === "remove-yes") { const s = state.sheet, coll = s.kind === "chore" ? "chores" : "supplies", prev = state[coll][s.id]; state.sheet = null; removeItem(coll, s.id); toast(`Removed “${prev.name}”.`, () => saveItem(coll, prev)) }
+  else if (act === "undo") { const u = toast.undo; toast.undo = null; document.getElementById("toast").hidden = true; u?.() }
   else if (act === "copy-list") copyList();
   else if (act === "backup") saveBackup();
 });
@@ -589,7 +597,7 @@ document.addEventListener("change", e => {
   const el = e.target, act = el.dataset.act, id = el.dataset.id;
   if (act === "tick") tick(id);
   else if (act === "bought") bought(id);
-  else if (act === "extra-done") { const x = state.shopping[id]; removeItem("shopping", id); toast(`Ticked off ${x?.name || "that"}.`) }
+  else if (act === "extra-done") { const x = state.shopping[id]; removeItem("shopping", id); toast(`Ticked off ${x?.name || "that"}.`, x && (() => saveItem("shopping", x))) }
   else if (act === "restore" && el.files?.[0]) restoreBackup(el.files[0]);
   else if (el.id === "i-area") { readForm(); renderSheet() }
 });
