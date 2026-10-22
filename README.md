@@ -13,7 +13,7 @@ Plan and tick off household chores, and keep a shopping list of the supplies you
 ## Features
 
 - **Phone layout:** a bottom tab bar with Today, Week, Chores and Supplies.
-- **Today:** the chores that are due, grouped by area (Kitchen, Bathroom, Laundry, Bedroom, Home), with a checkbox and a "Not today" button that moves a chore to tomorrow. Overdue chores say how late they are. A short shopping list sits beside them.
+- **Today:** the chores that are due, grouped by area (Kitchen, Bathroom, Laundry, Bedroom, Home), with a checkbox and a "Move to tomorrow" button. Overdue chores say how late they are. A short shopping list sits beside them.
 - **Recurring schedules:** each chore repeats every N days, counted from the day you last ticked it. Unticking puts it back.
 - **Week:** seven day cards. Past days show what you ticked, coming days show what's planned.
 - **Chores:** add, edit (name, area, how often, next due date, icon) and remove chores.
