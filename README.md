@@ -17,7 +17,7 @@ Plan and tick off household chores, and keep a shopping list of the supplies you
 - **Recurring schedules:** each chore repeats every N days, counted from the day you last ticked it. Unticking puts it back.
 - **Week:** seven day cards. Past days show what you ticked, coming days show what's planned.
 - **Chores:** add, edit (name, area, how often, next due date, icon) and remove chores.
-- **Supplies:** tap "Running low" to put something on the shopping list, and tick it off when you've bought it. The app then reminds you a few days before it usually runs out. You can add one-off items to the list and copy or share it.
+- **Supplies:** tap "Running low" to put something on the shopping list, and tick it off when you've bought it. The app then reminds you a few days before it usually runs out, and learns from each purchase how long things really last (the average of your last 3 purchases, measured up to when you marked it running low). You can add one-off items to the list and copy or share it.
 - **Starter list:** new diaries start empty, with a one-tap typical list of 17 chores and 17 supplies to trim.
 
 ## Data

@@ -250,7 +250,8 @@ const areaRank = a => { const i = AREA_ORDER.indexOf(a); return i < 0 ? 99 : i }
 const FREQS = [[1, "Every day"], [2, "Every 2 days"], [3, "Every 3 days"], [4, "Every 4 days"], [7, "Every week"], [14, "Every 2 weeks"], [30, "Every month"], [60, "Every 2 months"], [90, "Every 3 months"], [180, "Every 6 months"]];
 const LASTS = [[7, "About a week"], [14, "About 2 weeks"], [21, "About 3 weeks"], [30, "About a month"], [45, "About 6 weeks"], [60, "About 2 months"], [90, "About 3 months"], [180, "About 6 months"]];
 const freqLabel = n => FREQS.find(([d]) => d === n)?.[1] || `Every ${n} days`;
-const lastsLabel = n => (LASTS.find(([d]) => d === n)?.[1] || `About ${n} days`).replace(/^About/, "about");
+const roughly = n => n < 12 ? `about ${n} days` : n < 56 ? `about ${Math.round(n / 7)} weeks` : `about ${Math.round(n / 30)} months`;
+const lastsLabel = n => LASTS.find(([d]) => d === n)?.[1].replace(/^About/, "about") || roughly(n);
 
 /* Starter list: a typical home, trimmed by KK. Used only when someone taps "Use the starter list". */
 const STARTER = {
@@ -351,8 +352,18 @@ function staggered(list) {
    low = on the shopping list. bought = the last day it was bought, which drives the "running out soon" hints. */
 const runsOutOn = s => s.bought && s.lasts ? keyAdd(s.bought, s.lasts) : null;
 const soon = s => !s.low && runsOutOn(s) && dayNum(runsOutOn(s)) - dayNum(todayKey()) <= 5;
-function setLow(id, low) { const s = { ...state.supplies[id], low }; if (!low) delete s.low; saveItem("supplies", s) }
-function bought(id) { const prev = state.supplies[id], s = { ...prev, bought: todayKey() }; delete s.low; saveItem("supplies", s); toast(`Marked ${s.name} as bought. It's off your shopping list.`, () => saveItem("supplies", prev)) }
+function setLow(id, low) { const s = { ...state.supplies[id], low, lowSince: todayKey() }; if (!low) { delete s.low; delete s.lowSince } saveItem("supplies", s) }
+/* Smart predictions: each purchase measures how long the last one really lasted (from when it was bought to when it was marked
+   running low, or to today if it never was). "lasts" becomes the average of the last 3 measurements, so a 3-month guess that
+   keeps running out after 2 months moves to 2 months. Gaps under 3 days are ignored as mis-taps. */
+function bought(id) {
+  const prev = state.supplies[id], t = todayKey(), s = { ...prev, bought: t };
+  const used = prev.bought ? dayNum(prev.lowSince || t) - dayNum(prev.bought) : 0;
+  if (used >= 3) { s.used = [...(prev.used || []), used].slice(-3); s.lasts = Math.round(s.used.reduce((a, b) => a + b, 0) / s.used.length) }
+  delete s.low; delete s.lowSince; saveItem("supplies", s);
+  const learned = s.lasts !== prev.lasts ? ` It seems to last ${lastsLabel(s.lasts)}, so I'll remind you around ${short(keyAdd(t, s.lasts - 5))}.` : " It's off your shopping list.";
+  toast(`Marked ${s.name} as bought.${learned}`, () => saveItem("supplies", prev));
+}
 const shoppingList = () => [...supplies().filter(s => s.low).map(s => ({ ...s, kind: "supply" })), ...Object.values(state.shopping).sort((a, b) => a.added - b.added).map(x => ({ ...x, kind: "extra" }))];
 
 /* ---------- storage ---------- */
@@ -493,7 +504,7 @@ function renderSupplies() {
   const hintRows = hints.map(s => `<div class="hint">${thumb(s, "supply", 34)}<span>${esc(s.name)}<span class="sub">Bought ${when(s.bought)}, usually lasts ${lastsLabel(s.lasts)}</span></span><button class="btn small" data-act="low" data-id="${s.id}">Add to list</button></div>`).join("");
   const groups = byArea(supplies()).map(([area, ss]) => `<div class="group"><span class="eyebrow"><span class="dot" style="--c:var(--s${tintOf(area)})"></span>${esc(area)}</span>
     ${ss.map(s => `<div class="row${s.low ? " is-low" : ""}"><button class="row-main" data-act="edit-supply" data-id="${s.id}" aria-label="Edit ${esc(s.name)}">${thumb(s, "supply", 48)}
-      <span style="min-width:0"><span class="nm" style="display:block">${esc(s.name)}</span><span class="meta">${s.bought ? `Bought ${when(s.bought)} · ` : ""}lasts ${lastsLabel(s.lasts)}</span></span></button>
+      <span style="min-width:0"><span class="nm" style="display:block">${esc(s.name)}</span><span class="meta">${s.bought ? `Bought ${when(s.bought)} · ` : ""}lasts ${lastsLabel(s.lasts)}${s.used?.length ? ` · learned from ${s.used.length === 1 ? "your last purchase" : `your last ${s.used.length} purchases`}` : ""}</span></span></button>
       <button class="low-btn" data-act="low" data-id="${s.id}" aria-pressed="${!!s.low}">${s.low ? "On the list" : "Running low"}</button></div>`).join("")}</div>`).join("");
   return `<section class="glass panel"><div class="panel-head"><h2>Shopping <em>list</em></h2>${shop.length ? `<button class="btn small" data-act="copy-list">Copy list</button>` : ""}</div>
       ${shop.length ? `<div class="shop">${shopRows}</div><p class="muted" style="margin:0;font-size:13px">Tick things off as you buy them.</p>` : `<p class="muted" style="margin:0">Nothing to buy. Tap “Running low” on any supply below to add it here.</p>`}
@@ -501,7 +512,7 @@ function renderSupplies() {
       <form class="add-line" id="extraForm"><input class="input" id="extra-name" placeholder="Add something else, e.g. light bulbs" aria-label="Add something else to the list"><button class="btn" type="submit">Add</button></form>
     </section>
     <section class="glass panel"><div class="panel-head"><h2>Your <em>supplies</em></h2><button class="btn primary small" data-act="new-supply">Add a supply</button></div>
-      <p class="muted" style="margin:0;max-width:62ch">Tap “Running low” to put something on the shopping list, or tap a supply to edit it. After you tick something off as bought, the app reminds you a few days before it usually runs out.</p>
+      <p class="muted" style="margin:0;max-width:62ch">Tap “Running low” to put something on the shopping list, or tap a supply to edit it. After you tick something off as bought, the app reminds you a few days before it usually runs out, and learns from each purchase how long things really last.</p>
       ${groups || `<p class="muted" style="margin:0">No supplies yet. <button class="btn small" data-act="starter">Use the starter list</button></p>`}</section>`;
 }
 function backupPanel() {
@@ -566,6 +577,7 @@ function submitSheet() {
     saveItem("chores", c); toast(s.id ? "Saved." : `Added “${name}”. It's next due ${when(c.due)}.`);
   } else {
     const x = s.id ? { ...state.supplies[s.id] } : { id: newId("s") };
+    if (x.lasts !== d.lasts) delete x.used; /* a value set by hand starts the learning over */
     Object.assign(x, { name, area, lasts: d.lasts }); d.bought ? x.bought = d.bought : delete x.bought; d.icon ? x.icon = d.icon : delete x.icon;
     saveItem("supplies", x); toast(s.id ? "Saved." : `Added ${name}. Tap “Running low” when it's time to buy more.`);
   }
