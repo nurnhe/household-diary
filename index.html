@@ -405,6 +405,7 @@ function loadLocal() {
   state.loaded = true; state.mode = "local";
   addFiltersAndBrushHeads();
   refreshOldIcons();
+  addVacuumFilters();
   setStatus("Your household diary is saved in this browser on this device.");
   render();
 }
@@ -428,6 +429,13 @@ function refreshOldIcons() {
   if (once("household-diary-icons-refreshed")) { each(() => true, smart); persistLocal() }
   /* 2026-10-23: the dishwasher got its own icon. */
   if (once("household-diary-dishwasher-icons")) { each(x => /dish ?washer/i.test(x.name), smart); persistLocal() }
+}
+/* One-off (asked 2026-10-23): vacuum filters as supplies. */
+function addVacuumFilters() {
+  try { if (localStorage.getItem("household-diary-vacuum-filters") || !state.chores.dishes) return; localStorage.setItem("household-diary-vacuum-filters", "1") } catch (e) { return }
+  for (const x of [{ id: "robot-vacuum-filters", name: "Robot vacuum filters", area: "Home", lasts: 60 }, { id: "handheld-vacuum-filters", name: "Handheld vacuum filters", area: "Home", lasts: 90 }])
+    if (!state.supplies[x.id]) state.supplies[x.id] = { ...x, icon: guessIcon(x, "supply") };
+  persistLocal();
 }
 function persistLocal() { try { localStorage.setItem(LKEY, JSON.stringify({ chores: state.chores, supplies: state.supplies, shopping: state.shopping })) } catch (e) { toast("Couldn't save on this device. Free up some browser storage and try again.") } }
 const chains = {};
