@@ -534,16 +534,20 @@ function draftFrom(kind, x) { return kind === "chore" ? { name: x.name, area: x.
 function readForm() {
   const s = state.sheet, f = document.getElementById("itemForm"); if (!s || !f) return;
   const v = id => f.querySelector("#" + id)?.value ?? "";
-  s.draft.name = v("i-name"); s.draft.area = v("i-area");
+  s.draft.name = v("i-name");
+  /* Area is a drop-down of rooms, or a text box while adding a new one. */
+  const pick = f.querySelector("#i-area-pick"), fresh = f.querySelector("#i-area-new");
+  if (fresh) s.draft.area = fresh.value; else if (pick && pick.value !== "__new") s.draft.area = pick.value;
   if (s.kind === "chore") { s.draft.every = +v("i-every") || s.draft.every; s.draft.due = v("i-due") || s.draft.due }
   else { s.draft.lasts = +v("i-lasts") || s.draft.lasts; s.draft.bought = v("i-bought") }
 }
 function options(list, cur) { const has = list.some(([n]) => n === cur); return (has ? list : [...list, [cur, `Every ${cur} days`]]).map(([n, l]) => `<option value="${n}"${n === cur ? " selected" : ""}>${l}</option>`).join("") }
-function renderSheet() {
+/* force: re-render even while a field has focus (only from handlers that keep what was typed via readForm). */
+function renderSheet(force) {
   const root = document.getElementById("sheetRoot"), s = state.sheet;
   if (!s) { root.innerHTML = ""; return }
   const a = document.activeElement;
-  if (root.contains(a) && a.matches("input:not([type=checkbox]), select")) return;
+  if (!force && root.contains(a) && a.matches("input:not([type=checkbox]), select")) return;
   readForm();
   const d = s.draft, chore = s.kind === "chore", preview = { ...d, area: d.area || "Home" };
   const title = s.id ? d.name || (chore ? "Chore" : "Supply") : chore ? "New chore" : "New supply";
@@ -552,7 +556,8 @@ function renderSheet() {
     <form class="sheet-body" id="itemForm">
       <label class="field">${chore ? "What needs doing" : "What it is"}<input class="input" id="i-name" value="${esc(d.name)}" required placeholder="${chore ? "e.g. Water the balcony plants" : "e.g. Dishwasher pills"}"></label>
       <div class="form-grid">
-        <label class="field">Area<input class="input" id="i-area" list="area-list" value="${esc(d.area)}" placeholder="e.g. Kitchen"><datalist id="area-list">${areas().map(x => `<option value="${esc(x)}">`).join("")}</datalist></label>
+        ${s.newArea ? `<div class="field" style="grid-column:1/-1"><label for="i-area-new">New area</label><div class="add-line"><input class="input" id="i-area-new" value="${esc(d.area)}" placeholder="e.g. Balcony"><button type="button" class="btn small ghost" data-act="area-list">Back to list</button></div></div>`
+          : `<label class="field">Area<select class="input" id="i-area-pick">${[...new Set([...areas(), d.area].filter(Boolean))].map(x => `<option value="${esc(x)}"${x === d.area ? " selected" : ""}>${esc(x)}</option>`).join("")}<option value="__new">New area…</option></select></label>`}
         ${chore ? `<label class="field">How often<select class="input" id="i-every">${options(FREQS, d.every)}</select></label>
           <label class="field">Next due<input class="input" type="date" id="i-due" value="${esc(d.due)}"></label>`
         : `<label class="field">One usually lasts<select class="input" id="i-lasts">${options(LASTS, d.lasts).replace(/Every (\d+) days/, "About $1 days")}</select></label>
@@ -564,7 +569,7 @@ function renderSheet() {
     </form></aside>`;
 }
 function openSheet(kind, id) {
-  const x = id ? (kind === "chore" ? state.chores : state.supplies)[id] : kind === "chore" ? { name: "", area: "", every: 7, due: todayKey() } : { name: "", area: "", lasts: 30 };
+  const x = id ? (kind === "chore" ? state.chores : state.supplies)[id] : kind === "chore" ? { name: "", area: "Home", every: 7, due: todayKey() } : { name: "", area: "Home", lasts: 30 };
   state.sheet = { kind, id, draft: draftFrom(kind, x) }; render();
   if (!id) document.getElementById("i-name")?.focus();
 }
@@ -598,6 +603,7 @@ document.addEventListener("click", e => {
   else if (act === "edit-chore") openSheet("chore", id);
   else if (act === "edit-supply") openSheet("supply", id);
   else if (act === "close") { state.sheet = null; render() }
+  else if (act === "area-list") { readForm(); const s = state.sheet; s.newArea = false; if (!s.draft.area.trim()) s.draft.area = "Home"; renderSheet(true) }
   else if (act === "icon-set") { readForm(); state.sheet.draft.icon = el.dataset.icon; document.querySelectorAll("[data-act=icon-set]").forEach(b => b.setAttribute("aria-pressed", b === el)) }
   else if (act === "remove") { readForm(); state.sheet.confirm = true; renderSheet() }
   else if (act === "remove-no") { readForm(); state.sheet.confirm = false; renderSheet() }
@@ -613,7 +619,8 @@ document.addEventListener("change", e => {
   else if (act === "extra-done") { const x = state.shopping[id]; removeItem("shopping", id); toast(`Ticked off ${x?.name || "that"}.`, x && (() => saveItem("shopping", x))) }
   else if (act === "restore" && el.files?.[0]) restoreBackup(el.files[0]);
   /* Recolour the icons in place: re-rendering here would swallow a tap that blurred the field. */
-  else if (el.id === "i-area") { readForm(); document.querySelectorAll("[data-act=icon-set]").forEach(b => b.style.setProperty("--c", `var(--s${tintOf(state.sheet.draft.area || "Home")})`)) }
+  else if (el.id === "i-area-pick" && el.value === "__new") { readForm(); state.sheet.newArea = true; state.sheet.draft.area = ""; renderSheet(true); document.getElementById("i-area-new")?.focus() }
+  else if (el.id === "i-area-pick" || el.id === "i-area-new") { readForm(); document.querySelectorAll("[data-act=icon-set]").forEach(b => b.style.setProperty("--c", `var(--s${tintOf(state.sheet.draft.area || "Home")})`)) }
 });
 document.addEventListener("keydown", e => { if (e.key === "Escape" && state.sheet) { state.sheet = null; render() } });
 document.addEventListener("submit", e => {
