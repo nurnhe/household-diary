@@ -306,10 +306,10 @@ const ICON_GUESS = [[/coffee filter|filter paper/, "funnel"], [/coffee bean|bean
   [/plant|garden|flower|balcony/, "potted-plant"], [/bulb|light|lamp/, "lightbulb"], [/batter/, "battery-full"], [/\bcat\b|\bdog\b|pet|litter|kibble/, "paw-print"],
   [/first aid|plaster|bandage|medicine|painkiller/, "first-aid-kit"], [/bread|bakery|toast/, "bread"], [/egg/, "egg"], [/wine|beer|drink/, "wine"], [/vegetable|fruit|grocer/, "carrot"],
   [/paint|wall/, "paint-roller"], [/repair|fix|tool|screw/, "wrench"], [/recycl|bottles out|glass bin/, "recycle"], [/sofa|couch|cushion/, "couch"],
-  [/pill|tablet/, "pill"], [/salt/, "jar"], [/dish ?washer|dishes|plates/, "fork-knife"], [/counter|stove|wipe|spray|clean(er)?$/, "spray-bottle"], [/trash|bin|rubbish|garbage/, "trash"], [/laundry|wash(ing)? machine|load/, "washing-machine"],
+  [/dish soap|washing.up/, "pump-bottle"], [/fridge|freezer/, "snowflake"], [/detergent|softener|bleach/, "toner"], [/pill|tablet/, "pill"], [/salt/, "jar"], [/dish ?washer|dishes|plates/, "fork-knife"], [/counter|stove|wipe|spray|clean(er)?$/, "spray-bottle"], [/trash|bin|rubbish|garbage/, "trash"], [/laundry|wash(ing)? machine|load/, "washing-machine"],
   [/vacuum|sweep|hoover/, "broom"], [/mop|floor/, "drop"], [/toilet paper|paper towel|tissue/, "toilet-paper"], [/toilet|bathroom|loo/, "toilet"], [/shower|bath/, "shower"], [/bed|sheet|duvet|pillow/, "bed"], [/towel/, "towel"],
-  [/dust/, "feather"], [/fridge|freezer/, "snowflake"], [/oven|microwave|cook|hob/, "oven"], [/window|mirror|glass/, "squares-four"], [/declutter|drawer|shelf|sort/, "archive"], [/iron|clothes|fold/, "t-shirt"],
-  [/hand soap|soap/, "hand-soap"], [/sponge|cloth/, "package"], [/bag/, "tote"], [/detergent|softener|bleach/, "toner"], [/gel|shampoo|conditioner/, "pump-bottle"],
+  [/dust/, "feather"], [/oven|microwave|cook|hob/, "oven"], [/window|mirror|glass/, "squares-four"], [/declutter|drawer|shelf|sort/, "archive"], [/iron|clothes|fold/, "t-shirt"],
+  [/hand soap|soap/, "hand-soap"], [/sponge|cloth/, "package"], [/bag/, "tote"], [/gel|shampoo|conditioner/, "pump-bottle"],
   [/toothpaste/, "tube"], [/tooth/, "tooth"], [/sock/, "sock"], [/rinse|liquid|bottle/, "bottle"]];
 const STARTER_ICON = { "tidy": "sparkle", "trash": "trash", "fridge-clean": "snowflake", "dish-soap": "pump-bottle", "rinse-aid": "bottle", "laundry-detergent": "toner", "fabric-softener": "bottle", "washer-cleaner": "toner", "toilet-cleaner": "spray-bottle", "bathroom-cleaner": "spray-bottle", "surface-spray": "spray-bottle", "sponges": "package" };
 /* When nothing in the name matches, each room has its usual icons. */
@@ -387,6 +387,7 @@ function loadLocal() {
   state.chores = data.chores || {}; state.supplies = data.supplies || {}; state.shopping = data.shopping || {};
   state.loaded = true; state.mode = "local";
   addFiltersAndBrushHeads();
+  refreshOldIcons();
   setStatus("Your household diary is saved in this browser on this device.");
   render();
 }
@@ -400,6 +401,14 @@ function addFiltersAndBrushHeads() {
   add("chores", { id: "brush-head", name: "Replace the toothbrush head", area: "Bathroom", every: 90, due: "2027-01-06", done: ["2026-10-08"], icon: "tooth" });
   add("supplies", { id: "water-filters", name: "Water filter cartridges", area: "Kitchen", lasts: 60, bought: "2026-09-22", icon: "drop" });
   add("supplies", { id: "brush-heads", name: "Toothbrush heads", area: "Bathroom", lasts: 90, bought: "2026-10-08", icon: "tooth" });
+  persistLocal();
+}
+/* One-off (asked 2026-10-23): give the items saved before smart icons the icon the app now guesses for them. Runs once. */
+function refreshOldIcons() {
+  const KEY = "household-diary-icons-refreshed";
+  try { if (localStorage.getItem(KEY)) return; localStorage.setItem(KEY, "1") } catch (e) { return }
+  for (const [coll, kind] of [["chores", "chore"], ["supplies", "supply"]])
+    for (const x of Object.values(state[coll])) { const g = guessIcon({ ...x, icon: undefined }, kind); if (x.icon !== g) x.icon = g }
   persistLocal();
 }
 function persistLocal() { try { localStorage.setItem(LKEY, JSON.stringify({ chores: state.chores, supplies: state.supplies, shopping: state.shopping })) } catch (e) { toast("Couldn't save on this device. Free up some browser storage and try again.") } }
