@@ -306,7 +306,7 @@ const ICON_GUESS = [[/coffee filter|filter paper/, "funnel"], [/coffee bean|bean
   [/plant|garden|flower|balcony/, "potted-plant"], [/bulb|light|lamp/, "lightbulb"], [/batter/, "battery-full"], [/\bcat\b|\bdog\b|pet|litter|kibble/, "paw-print"],
   [/first aid|plaster|bandage|medicine|painkiller/, "first-aid-kit"], [/bread|bakery|toast/, "bread"], [/egg/, "egg"], [/wine|beer|drink/, "wine"], [/vegetable|fruit|grocer/, "carrot"],
   [/paint|wall/, "paint-roller"], [/repair|fix|tool|screw/, "wrench"], [/recycl|bottles out|glass bin/, "recycle"], [/sofa|couch|cushion/, "couch"],
-  [/deodorant|perfume/, "bottle"], [/\bpads?\b|tampon|hygiene|period/, "package"], [/dish ?washer/, "dishwasher"], [/dish soap|washing.up/, "pump-bottle"], [/fridge|freezer/, "snowflake"], [/detergent|softener|bleach/, "toner"], [/pill|tablet/, "pill"], [/salt/, "jar"], [/dishes|plates/, "fork-knife"], [/counter|stove|wipe|spray|clean(er)?$/, "spray-bottle"], [/trash|bin|rubbish|garbage/, "trash"], [/laundry|wash(ing)? machine|load/, "washing-machine"],
+  [/toilet (block|rim)|rim block|wc ball/, "toilet"], [/air freshener|freshener/, "spray-bottle"], [/drain|plunger|blockage/, "drop"], [/descal|limescale/, "spray-bottle"], [/deodorant|perfume/, "bottle"], [/\bpads?\b|tampon|hygiene|period/, "package"], [/dish ?washer/, "dishwasher"], [/dish soap|washing.up/, "pump-bottle"], [/fridge|freezer/, "snowflake"], [/detergent|softener|bleach/, "toner"], [/pill|tablet/, "pill"], [/salt/, "jar"], [/dishes|plates/, "fork-knife"], [/counter|stove|wipe|spray|clean(er)?$/, "spray-bottle"], [/trash|bin|rubbish|garbage/, "trash"], [/laundry|wash(ing)? machine|load/, "washing-machine"],
   [/vacuum|sweep|hoover/, "broom"], [/mop|floor/, "drop"], [/toilet paper|paper towel|tissue/, "toilet-paper"], [/toilet|bathroom|loo/, "toilet"], [/shower|bath/, "shower"], [/bed|sheet|duvet|pillow/, "bed"], [/towel/, "towel"],
   [/dust/, "feather"], [/oven|microwave|cook|hob/, "oven"], [/window|mirror|glass/, "squares-four"], [/declutter|drawer|shelf|sort/, "archive"], [/iron|clothes|fold/, "t-shirt"],
   [/hand soap|soap/, "hand-soap"], [/sponge|cloth/, "package"], [/bag/, "tote"], [/gel|shampoo|conditioner/, "pump-bottle"],
@@ -390,6 +390,7 @@ function loadLocal() {
   refreshOldIcons();
   addVacuumFilters();
   addPersonalCare();
+  addCleaningExtras();
   setStatus("Your household diary is saved in this browser on this device.");
   render();
 }
@@ -420,6 +421,14 @@ function addPersonalCare() {
   for (const [coll, id] of [["supplies", "toothpaste"], ["supplies", "shower-gel"], ["supplies", "brush-heads"], ["chores", "brush-head"]])
     if (state[coll][id]?.area === "Bathroom") state[coll][id].area = "Personal care";
   for (const x of [{ id: "deodorant", name: "Deodorant", area: "Personal care", lasts: 60 }, { id: "hygiene-pads", name: "Hygiene pads", area: "Personal care", lasts: 30 }])
+    if (!state.supplies[x.id]) state.supplies[x.id] = { ...x, icon: guessIcon(x, "supply") };
+  persistLocal();
+}
+/* One-off (asked 2026-10-28): toilet blocks, air freshener, drain cleaner and descaler. */
+function addCleaningExtras() {
+  try { if (localStorage.getItem("household-diary-cleaning-extras") || !state.chores.dishes) return; localStorage.setItem("household-diary-cleaning-extras", "1") } catch (e) { return }
+  for (const x of [{ id: "toilet-blocks", name: "Toilet rim blocks", area: "Bathroom", lasts: 30 }, { id: "air-freshener", name: "Air freshener", area: "Home", lasts: 45 },
+    { id: "drain-cleaner", name: "Drain cleaner", area: "Bathroom", lasts: 90 }, { id: "descaler", name: "Descaler", area: "Kitchen", lasts: 90 }])
     if (!state.supplies[x.id]) state.supplies[x.id] = { ...x, icon: guessIcon(x, "supply") };
   persistLocal();
 }
