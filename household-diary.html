@@ -244,8 +244,8 @@ nav.tabs button[aria-selected="true"] { color: var(--accent); border-color: var(
 <script>
 const DOW = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 /* Each area has its own tint, used for icon tiles and the Today groups. */
-const AREA_ORDER = ["Kitchen", "Bathroom", "Laundry", "Bedroom", "Home"];
-const AREA_TINT = { Kitchen: 4, Bathroom: 1, Laundry: 6, Bedroom: 7, Home: 3 };
+const AREA_ORDER = ["Kitchen", "Bathroom", "Personal care", "Laundry", "Bedroom", "Home"];
+const AREA_TINT = { Kitchen: 4, Bathroom: 1, "Personal care": 0, Laundry: 6, Bedroom: 7, Home: 3 };
 const tintOf = area => AREA_TINT[area] ?? [0, 2, 5, 8, 9][[...String(area)].reduce((n, c) => n + c.charCodeAt(0), 0) % 5];
 const areaRank = a => { const i = AREA_ORDER.indexOf(a); return i < 0 ? 99 : i };
 const FREQS = [[1, "Every day"], [2, "Every 2 days"], [3, "Every 3 days"], [4, "Every 4 days"], [7, "Every week"], [14, "Every 2 weeks"], [30, "Every month"], [60, "Every 2 months"], [90, "Every 3 months"], [180, "Every 6 months"]];
@@ -265,8 +265,8 @@ const STARTER = {
   supplies: [["dishwasher-pills", "Dishwasher pills", "Kitchen", 30], ["dish-soap", "Dish soap", "Kitchen", 30], ["rinse-aid", "Rinse aid", "Kitchen", 60], ["dishwasher-salt", "Dishwasher salt", "Kitchen", 90],
     ["sponges", "Sponges", "Kitchen", 14], ["paper-towels", "Paper towels", "Kitchen", 21], ["trash-bags", "Trash bags", "Home", 30], ["surface-spray", "All-purpose cleaner", "Home", 45],
     ["laundry-detergent", "Laundry detergent", "Laundry", 45], ["fabric-softener", "Fabric softener", "Laundry", 60], ["hand-soap", "Hand soap", "Bathroom", 30], ["toilet-paper", "Toilet paper", "Bathroom", 14],
-    ["toilet-cleaner", "Toilet cleaner", "Bathroom", 45], ["bathroom-cleaner", "Bathroom / limescale cleaner", "Bathroom", 45], ["shower-gel", "Shower gel and shampoo", "Bathroom", 30],
-    ["toothpaste", "Toothpaste", "Bathroom", 45], ["washer-cleaner", "Washing machine cleaner", "Laundry", 90]]
+    ["toilet-cleaner", "Toilet cleaner", "Bathroom", 45], ["bathroom-cleaner", "Bathroom / limescale cleaner", "Bathroom", 45], ["shower-gel", "Shower gel and shampoo", "Personal care", 30],
+    ["toothpaste", "Toothpaste", "Personal care", 45], ["washer-cleaner", "Washing machine cleaner", "Laundry", 90]]
 };
 
 const state = { tab: "today", weekStart: mondayOf(new Date()), chores: {}, supplies: {}, shopping: {}, loaded: false, mode: "loading", sheet: null };
@@ -306,14 +306,14 @@ const ICON_GUESS = [[/coffee filter|filter paper/, "funnel"], [/coffee bean|bean
   [/plant|garden|flower|balcony/, "potted-plant"], [/bulb|light|lamp/, "lightbulb"], [/batter/, "battery-full"], [/\bcat\b|\bdog\b|pet|litter|kibble/, "paw-print"],
   [/first aid|plaster|bandage|medicine|painkiller/, "first-aid-kit"], [/bread|bakery|toast/, "bread"], [/egg/, "egg"], [/wine|beer|drink/, "wine"], [/vegetable|fruit|grocer/, "carrot"],
   [/paint|wall/, "paint-roller"], [/repair|fix|tool|screw/, "wrench"], [/recycl|bottles out|glass bin/, "recycle"], [/sofa|couch|cushion/, "couch"],
-  [/dish ?washer/, "dishwasher"], [/dish soap|washing.up/, "pump-bottle"], [/fridge|freezer/, "snowflake"], [/detergent|softener|bleach/, "toner"], [/pill|tablet/, "pill"], [/salt/, "jar"], [/dishes|plates/, "fork-knife"], [/counter|stove|wipe|spray|clean(er)?$/, "spray-bottle"], [/trash|bin|rubbish|garbage/, "trash"], [/laundry|wash(ing)? machine|load/, "washing-machine"],
+  [/deodorant|perfume/, "bottle"], [/\bpads?\b|tampon|hygiene|period/, "package"], [/dish ?washer/, "dishwasher"], [/dish soap|washing.up/, "pump-bottle"], [/fridge|freezer/, "snowflake"], [/detergent|softener|bleach/, "toner"], [/pill|tablet/, "pill"], [/salt/, "jar"], [/dishes|plates/, "fork-knife"], [/counter|stove|wipe|spray|clean(er)?$/, "spray-bottle"], [/trash|bin|rubbish|garbage/, "trash"], [/laundry|wash(ing)? machine|load/, "washing-machine"],
   [/vacuum|sweep|hoover/, "broom"], [/mop|floor/, "drop"], [/toilet paper|paper towel|tissue/, "toilet-paper"], [/toilet|bathroom|loo/, "toilet"], [/shower|bath/, "shower"], [/bed|sheet|duvet|pillow/, "bed"], [/towel/, "towel"],
   [/dust/, "feather"], [/oven|microwave|cook|hob/, "oven"], [/window|mirror|glass/, "squares-four"], [/declutter|drawer|shelf|sort/, "archive"], [/iron|clothes|fold/, "t-shirt"],
   [/hand soap|soap/, "hand-soap"], [/sponge|cloth/, "package"], [/bag/, "tote"], [/gel|shampoo|conditioner/, "pump-bottle"],
   [/toothpaste/, "tube"], [/tooth/, "tooth"], [/sock/, "sock"], [/rinse|liquid|bottle/, "bottle"]];
 const STARTER_ICON = { "tidy": "sparkle", "trash": "trash", "fridge-clean": "snowflake", "dish-soap": "pump-bottle", "rinse-aid": "bottle", "laundry-detergent": "toner", "fabric-softener": "bottle", "washer-cleaner": "toner", "toilet-cleaner": "spray-bottle", "bathroom-cleaner": "spray-bottle", "surface-spray": "spray-bottle", "sponges": "package" };
 /* When nothing in the name matches, each room has its usual icons. */
-const AREA_ICONS = { Kitchen: ["fork-knife", "spray-bottle", "snowflake", "oven", "coffee"], Bathroom: ["toilet", "shower", "hand-soap", "toilet-paper", "tooth"],
+const AREA_ICONS = { Kitchen: ["fork-knife", "spray-bottle", "snowflake", "oven", "coffee"], Bathroom: ["toilet", "shower", "hand-soap", "toilet-paper", "tooth"], "Personal care": ["tube", "pump-bottle", "tooth", "package", "bottle"],
   Laundry: ["washing-machine", "t-shirt", "toner", "sock", "towel"], Bedroom: ["bed", "t-shirt", "lightbulb", "archive"], Home: ["broom", "sparkle", "trash", "potted-plant", "lightbulb"] };
 const guesses = name => ICON_GUESS.filter(([re]) => re.test(name.toLowerCase())).map(([, icon]) => icon);
 const GENERIC = { chore: ["sparkle", "broom", "spray-bottle", "trash", "drop", "wrench"], supply: ["package", "bottle", "spray-bottle", "pump-bottle", "jar", "tote"] };
@@ -389,6 +389,7 @@ function loadLocal() {
   addFiltersAndBrushHeads();
   refreshOldIcons();
   addVacuumFilters();
+  addPersonalCare();
   setStatus("Your household diary is saved in this browser on this device.");
   render();
 }
@@ -412,6 +413,15 @@ function refreshOldIcons() {
   if (once("household-diary-icons-refreshed")) { each(() => true, smart); persistLocal() }
   /* 2026-10-23: the dishwasher got its own icon. */
   if (once("household-diary-dishwasher-icons")) { each(x => /dish ?washer/i.test(x.name), smart); persistLocal() }
+}
+/* One-off (asked 2026-10-28): a "Personal care" area for toothpaste, shower gel, toothbrush heads, plus deodorant and hygiene pads. */
+function addPersonalCare() {
+  try { if (localStorage.getItem("household-diary-personal-care") || !state.chores.dishes) return; localStorage.setItem("household-diary-personal-care", "1") } catch (e) { return }
+  for (const [coll, id] of [["supplies", "toothpaste"], ["supplies", "shower-gel"], ["supplies", "brush-heads"], ["chores", "brush-head"]])
+    if (state[coll][id]?.area === "Bathroom") state[coll][id].area = "Personal care";
+  for (const x of [{ id: "deodorant", name: "Deodorant", area: "Personal care", lasts: 60 }, { id: "hygiene-pads", name: "Hygiene pads", area: "Personal care", lasts: 30 }])
+    if (!state.supplies[x.id]) state.supplies[x.id] = { ...x, icon: guessIcon(x, "supply") };
+  persistLocal();
 }
 /* One-off (asked 2026-10-23): vacuum filters as supplies. */
 function addVacuumFilters() {
