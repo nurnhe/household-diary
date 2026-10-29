@@ -107,6 +107,9 @@ nav.tabs button[aria-selected="true"] { color: var(--accent); border-color: var(
 .step .sub { display: block; font-size: 12.5px; font-weight: 400; color: var(--muted) }
 .sub .late { color: var(--warn); font-weight: 600 }
 .steps li.done .nm { color: var(--muted); text-decoration: line-through; text-decoration-color: color-mix(in srgb, var(--muted) 70%, transparent) }
+.tomorrow { display: grid; gap: 6px; margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--line) }
+.tomorrow ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px }
+.tomorrow li { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px; align-items: center; color: var(--muted); font-size: 14px }
 .skip-btn { border: 1px solid transparent; background: none; border-radius: 8px; padding: 3px 9px; font-size: 12.5px; font-weight: 600; color: var(--muted); white-space: nowrap }
 .skip-btn:hover { border-color: var(--line); background: var(--surface); color: var(--accent) }
 .thumb { display: inline-grid; place-items: center; border-radius: 10px; flex: none; background: var(--surface) }
@@ -394,6 +397,7 @@ function tick(id) {
   else { c.prevDue = c.due; c.due = keyAdd(t, c.every); done.push(t) }
   c.done = done.slice(-40); saveItem("chores", c);
 }
+function sooner(id) { const prev = state.chores[id], c = { ...prev, due: todayKey() }; saveItem("chores", c); toast(`Moved “${c.name}” back to today.`, () => saveItem("chores", prev)) }
 function later(id) { const prev = state.chores[id], c = { ...prev, due: keyAdd(todayKey(), 1) }; saveItem("chores", c); toast(`Moved “${c.name}” to tomorrow.`, () => saveItem("chores", prev)) }
 /* Starter chores are spread out so the first day isn't everything at once. */
 function staggered(list) {
@@ -538,6 +542,9 @@ function renderToday() {
     <div class="area-head"><h3>${esc(area)}</h3><span class="count">${cs.filter(doneToday).length} of ${cs.length}</span></div>
     <ol class="steps">${cs.map(choreRow).join("")}</ol></div>`).join("");
   const next = chores().filter(c => !isDue(c) && !doneToday(c)).sort((a, b) => a.due.localeCompare(b.due))[0];
+  const tmr = keyAdd(k, 1), tomorrow = chores().filter(c => c.due === tmr && !doneToday(c));
+  const tomorrowBlock = tomorrow.length ? `<div class="tomorrow"><span class="eyebrow">Planned for tomorrow</span><ul>${tomorrow.map(c => `<li>${thumb(c, "chore", 28)}<span class="nm">${esc(c.name)}</span>
+      <button class="skip-btn" data-act="sooner" data-id="${c.id}" title="Move this chore to today">Move to today</button></li>`).join("")}</ul></div>` : "";
   const shop = shoppingList(), hints = supplies().filter(soon);
   const lowCard = shop.length || hints.length ? `<div class="low-card"><span class="eyebrow">Shopping list</span>
       ${shop.length ? `<ul>${shop.slice(0, 6).map(s => `<li>${s.kind === "supply" ? miniIcon(s, "supply") : `<span class="dot" aria-hidden="true"></span>`}<span>${esc(s.name)}</span></li>`).join("")}</ul>${shop.length > 6 ? `<span class="muted" style="font-size:13px">and ${shop.length - 6} more</span>` : ""}` : ""}
@@ -552,6 +559,7 @@ function renderToday() {
       ${lowCard}
     </div>
     ${list.length ? `<div class="areas">${groups}</div>` : `<div class="all-done"><h3>Nothing due today</h3><p class="muted">${next ? `Next up: ${esc(next.name)}, ${when(next.due)}.` : "Add a chore to get started."}</p></div>`}
+    ${tomorrowBlock}
   </section>`;
 }
 function renderWeek() {
@@ -696,6 +704,7 @@ document.addEventListener("click", e => {
   if (act === "tab") { state.tab = el.dataset.tab; state.sheet = null; render(); window.scrollTo(0, 0) }
   else if (act === "week") { const n = +el.dataset.n; state.weekStart = n ? addDays(state.weekStart, 7 * n) : mondayOf(new Date()); render() }
   else if (act === "later") later(id);
+  else if (act === "sooner") sooner(id);
   else if (act === "low") { const s = state.supplies[id]; setLow(id, !s.low); if (!s.low) toast(`Added ${s.name} to your shopping list.`) }
   else if (act === "starter") useStarter();
   else if (act === "new-chore") openSheet("chore");
