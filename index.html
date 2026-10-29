@@ -12,7 +12,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-<script>try{var t=localStorage.getItem("household-diary-theme");if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
+<script>try{var t=localStorage.getItem("nurnhe-theme")||localStorage.getItem("household-diary-theme");if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 </head>
 <body>
@@ -271,12 +271,20 @@ nav.tabs button[aria-selected="true"] { color: var(--accent); border-color: var(
 
 <script>
 /* Colour theme: "system" follows the phone, or force light or dark. Remembered on this device. */
-const THEMES = ["system", "light", "dark"], THEME_KEY = "household-diary-theme";
+/* Saved under "nurnhe-theme", one key shared by all of KK's apps on nurnhe.github.io (values auto, light, dark),
+   so switching it in one app switches them all. An older choice saved under this app's own key moves there once. */
+const THEMES = ["system", "light", "dark"], THEME_KEY = "nurnhe-theme", OLD_THEME_KEY = "household-diary-theme";
 const THEME_ICON = {
   system: '<path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor"/><circle cx="12" cy="12" r="9"/>',
   light: '<circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4L7 17M17 7l1.4-1.4"/>',
   dark: '<path d="M12 3a7.5 7.5 0 0 0 7.9 12.4A9 9 0 1 1 12 3z"/>' };
-const themeNow = () => { try { const t = localStorage.getItem(THEME_KEY); return THEMES.includes(t) ? t : "system" } catch (e) { return "system" } };
+const themeNow = () => {
+  try {
+    let t = localStorage.getItem(THEME_KEY);
+    if (!t) { const old = localStorage.getItem(OLD_THEME_KEY); if (old) { t = old === "system" ? "auto" : old; localStorage.setItem(THEME_KEY, t); localStorage.removeItem(OLD_THEME_KEY) } }
+    return t === "auto" ? "system" : THEMES.includes(t) ? t : "system";
+  } catch (e) { return "system" }
+};
 const themeLabel = t => t === "system" ? "Match my phone" : t === "light" ? "Light" : "Dark";
 function applyTheme(t = themeNow()) {
   const root = document.documentElement;
@@ -290,7 +298,8 @@ function applyTheme(t = themeNow()) {
   if (b) { b.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${THEME_ICON[t]}</svg>`;
     b.title = b.ariaLabel = `Colour theme: ${themeLabel(t)}. Tap to change.` }
 }
-function setTheme(t) { try { localStorage.setItem(THEME_KEY, t) } catch (e) {} applyTheme(t); if (state.tab === "chores") render() }
+function setTheme(t) { try { localStorage.setItem(THEME_KEY, t === "system" ? "auto" : t) } catch (e) {} applyTheme(t); if (state.tab === "chores") render() }
+addEventListener("storage", e => { if (e.key === THEME_KEY) { applyTheme(); if (state.tab === "chores") render() } });
 const DOW = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 /* Each area has its own tint, used for icon tiles and the Today groups. */
 const AREA_ORDER = ["Kitchen", "Bathroom", "Personal care", "Laundry", "Bedroom", "Home"];

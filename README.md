@@ -20,6 +20,7 @@ Plan and tick off household chores, and keep a shopping list of the supplies you
 - **Icons:** picked from the name as you type (coffee beans, filters, light bulbs…) or the room, with a few suggestions in the form and the full set under "More icons".
 - **Supplies:** tap "Running low" to put something on the shopping list, and tick it off when you've bought it. The app then reminds you a few days before it usually runs out, and learns from each purchase how long things really last (the average of your last 3 purchases, measured up to when you marked it running low). You can add one-off items to the list and copy or share it.
 - **Starter list:** new diaries start empty, with a one-tap typical list of 17 chores and 17 supplies to trim.
+- **Colour theme:** the button next to the title cycles Match my phone, Light and Dark. The choice is shared with the other apps on nurnhe.github.io, so switching it in one switches them all.
 
 ## Data
 
