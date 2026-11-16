@@ -125,6 +125,7 @@ nav.tabs button[aria-selected="true"] { color: var(--accent); border-color: var(
 .step .sub { display: block; font-size: 12.5px; font-weight: 400; color: var(--muted) }
 .sub .late { color: var(--warn); font-weight: 600 }
 .steps li.done .nm { color: var(--muted); text-decoration: line-through; text-decoration-color: color-mix(in srgb, var(--muted) 70%, transparent) }
+.oneoff-add { margin-top: 16px }
 .tomorrow { display: grid; gap: 6px; margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--line) }
 .tomorrow ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px }
 .tomorrow li { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px; align-items: center; color: var(--muted); font-size: 14px }
@@ -311,7 +312,7 @@ const tintOf = area => AREA_TINT[area] ?? [0, 2, 5, 8, 9][[...String(area)].redu
 const areaRank = a => { const i = AREA_ORDER.indexOf(a); return i < 0 ? 99 : i };
 const FREQS = [[1, "Every day"], [2, "Every 2 days"], [3, "Every 3 days"], [4, "Every 4 days"], [7, "Every week"], [14, "Every 2 weeks"], [30, "Every month"], [60, "Every 2 months"], [90, "Every 3 months"], [180, "Every 6 months"]];
 const LASTS = [[7, "About a week"], [14, "About 2 weeks"], [21, "About 3 weeks"], [30, "About a month"], [45, "About 6 weeks"], [60, "About 2 months"], [90, "About 3 months"], [180, "About 6 months"]];
-const freqLabel = n => FREQS.find(([d]) => d === n)?.[1] || `Every ${n} days`;
+const freqLabel = n => n === 0 ? "One-off" : FREQS.find(([d]) => d === n)?.[1] || `Every ${n} days`;
 const roughly = n => n < 12 ? `about ${n} days` : n < 56 ? `about ${Math.round(n / 7)} weeks` : `about ${Math.round(n / 30)} months`;
 const lastsLabel = n => LASTS.find(([d]) => d === n)?.[1].replace(/^About/, "about") || roughly(n);
 
@@ -351,7 +352,7 @@ function when(k) {
 /* ---------- helpers ---------- */
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const newId = p => p + "_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
-const chores = () => Object.values(state.chores).sort((a, b) => areaRank(a.area) - areaRank(b.area) || a.area.localeCompare(b.area) || a.every - b.every || a.name.localeCompare(b.name));
+const chores = () => Object.values(state.chores).filter(c => !(c.once && c.finished && c.finished < todayKey())).sort((a, b) => areaRank(a.area) - areaRank(b.area) || a.area.localeCompare(b.area) || a.every - b.every || a.name.localeCompare(b.name));
 const supplies = () => Object.values(state.supplies).sort((a, b) => areaRank(a.area) - areaRank(b.area) || a.area.localeCompare(b.area) || a.name.localeCompare(b.name));
 const areas = () => [...new Set([...AREA_ORDER, ...chores().map(c => c.area), ...supplies().map(s => s.area)])];
 function byArea(list) { const g = new Map(); for (const x of list) { if (!g.has(x.area)) g.set(x.area, []); g.get(x.area).push(x) } return [...g] }
@@ -370,7 +371,7 @@ const ICON_GUESS = [[/coffee filter|filter paper/, "funnel"], [/coffee bean|bean
   [/paint|wall/, "paint-roller"], [/repair|fix|tool|screw/, "wrench"], [/recycl|bottles out|glass bin/, "recycle"], [/sofa|couch|cushion/, "couch"],
   [/toilet (block|rim)|rim block|wc ball/, "toilet"], [/air freshener|freshener/, "spray-bottle"], [/drain|plunger|blockage/, "drop"], [/descal|limescale/, "spray-bottle"], [/deodorant|perfume/, "bottle"], [/\bpads?\b|tampon|hygiene|period/, "package"], [/dish ?washer/, "dishwasher"], [/dish soap|washing.up/, "pump-bottle"], [/fridge|freezer/, "snowflake"], [/detergent|softener|bleach/, "toner"], [/pill|tablet/, "pill"], [/salt/, "jar"], [/dishes|plates/, "fork-knife"], [/counter|stove|wipe|spray|clean(er)?$/, "spray-bottle"], [/trash|bin|rubbish|garbage/, "trash"], [/laundry|wash(ing)? machine|load/, "washing-machine"],
   [/vacuum|sweep|hoover/, "broom"], [/mop|floor/, "drop"], [/toilet paper|paper towel|tissue/, "toilet-paper"], [/toilet|bathroom|loo/, "toilet"], [/shower|bath/, "shower"], [/bed|sheet|duvet|pillow/, "bed"], [/towel/, "towel"],
-  [/dust/, "feather"], [/oven|microwave|cook|hob/, "oven"], [/window|mirror|glass/, "squares-four"], [/declutter|drawer|shelf|sort/, "archive"], [/iron|clothes|fold/, "t-shirt"],
+  [/dust/, "feather"], [/oven|microwave|cook|hob/, "oven"], [/window|mirror|glass/, "squares-four"], [/declutter|drawer|shelf|sort/, "archive"], [/iron|clothes|fold|jeans|tailor|trousers|dress|shirt|alteration/, "t-shirt"],
   [/hand soap|soap/, "hand-soap"], [/sponge|cloth/, "package"], [/bag/, "tote"], [/gel|shampoo|conditioner/, "pump-bottle"],
   [/toothpaste/, "tube"], [/tooth/, "tooth"], [/sock/, "sock"], [/rinse|liquid|bottle/, "bottle"]];
 const STARTER_ICON = { "tidy": "sparkle", "trash": "trash", "fridge-clean": "snowflake", "dish-soap": "pump-bottle", "rinse-aid": "bottle", "laundry-detergent": "toner", "fabric-softener": "bottle", "washer-cleaner": "toner", "toilet-cleaner": "spray-bottle", "bathroom-cleaner": "spray-bottle", "surface-spray": "spray-bottle", "sponges": "package" };
@@ -399,18 +400,20 @@ function setStatus(s) { document.getElementById("status").textContent = s }
 /* ---------- schedule ----------
    A chore keeps its next due date (due) and the days it was done (done, newest last).
    Ticking it today moves due to today + every; unticking puts the old due date back. */
-const doneOn = (c, k) => (c.done || []).includes(k);
+const doneOn = (c, k) => c.once ? c.finished === k : (c.done || []).includes(k);
 const doneToday = c => doneOn(c, todayKey());
-const isDue = c => c.due <= todayKey();
+const isDue = c => c.due <= todayKey() && !(c.once && c.finished);
 const lateBy = c => dayNum(todayKey()) - dayNum(c.due);
 function dueOn(c, k) {
   const t = todayKey(); if (k < t) return false;
+  if (c.once) return !c.finished && k === (c.due < t ? t : c.due);
   const base = c.due < t ? (doneToday(c) ? c.due : t) : c.due, n = dayNum(k) - dayNum(base);
   return n >= 0 && n % Math.max(1, c.every) === 0;
 }
 function todayList() { return chores().filter(c => isDue(c) || doneToday(c)) }
 function tick(id) {
   const c = { ...state.chores[id] }, t = todayKey(), done = (c.done || []).filter(k => k !== t);
+  if (c.once) { if (c.finished === t) delete c.finished; else { c.finished = t; done.push(t) } c.done = done; saveItem("chores", c); return }
   if (doneToday(c)) { c.due = c.prevDue || t; delete c.prevDue }
   else { c.prevDue = c.due; c.due = keyAdd(t, c.every); done.push(t) }
   c.done = done.slice(-40); saveItem("chores", c);
@@ -548,7 +551,7 @@ function emptyState() {
 }
 function choreRow(c) {
   const d = doneToday(c), late = !d && lateBy(c) > 0;
-  const sub = d ? `Done · next ${when(c.due)}` : late ? `<span class="late">${lateBy(c) === 1 ? "Since yesterday" : `${lateBy(c)} days overdue`}</span> · ${freqLabel(c.every).toLowerCase()}` : freqLabel(c.every);
+  const sub = c.once ? (d ? "Done" : late ? `<span class="late">${lateBy(c) === 1 ? "Since yesterday" : `${lateBy(c)} days overdue`}</span> · one-off` : "One-off") : d ? `Done · next ${when(c.due)}` : late ? `<span class="late">${lateBy(c) === 1 ? "Since yesterday" : `${lateBy(c)} days overdue`}</span> · ${freqLabel(c.every).toLowerCase()}` : freqLabel(c.every);
   return `<li class="${d ? "done" : ""}"><label class="step">
     <input type="checkbox" data-act="tick" data-id="${c.id}"${d ? " checked" : ""} aria-label="${esc(c.name)}">
     ${thumb(c, "chore", 40)}<span class="txt"><span class="nm">${esc(c.name)}</span><span class="sub">${sub}</span></span></label>
@@ -578,6 +581,7 @@ function renderToday() {
     </div>
     ${list.length ? `<div class="areas">${groups}</div>` : `<div class="all-done"><h3>Nothing due today</h3><p class="muted">${next ? `Next up: ${esc(next.name)}, ${when(next.due)}.` : "Add a chore to get started."}</p></div>`}
     ${tomorrowBlock}
+    <div class="oneoff-add"><button class="btn small" data-act="new-once">+ Add a one-off task</button></div>
   </section>`;
 }
 function renderWeek() {
@@ -608,8 +612,8 @@ function renderWeek() {
 function renderChores() {
   const groups = byArea(chores()).map(([area, cs]) => `<div class="group"><span class="eyebrow"><span class="dot" style="--c:var(--s${tintOf(area)})"></span>${esc(area)}</span>
     ${cs.map(c => `<div class="row"><button class="row-main" data-act="edit-chore" data-id="${c.id}" aria-label="Edit ${esc(c.name)}">${thumb(c, "chore", 48)}
-      <span style="min-width:0"><span class="nm" style="display:block">${esc(c.name)}</span><span class="meta">${freqLabel(c.every)} · ${doneToday(c) ? "done today" : isDue(c) ? "due today" : "next " + when(c.due)}</span></span></button></div>`).join("")}</div>`).join("");
-  return `<section class="glass panel"><div class="panel-head"><h2>Your <em>chores</em></h2><button class="btn primary small" data-act="new-chore">Add a chore</button></div>
+      <span style="min-width:0"><span class="nm" style="display:block">${esc(c.name)}</span><span class="meta">${freqLabel(c.every)} · ${doneToday(c) ? "done today" : isDue(c) ? "due today" : (c.once ? "due " : "next ") + when(c.due)}</span></span></button></div>`).join("")}</div>`).join("");
+  return `<section class="glass panel"><div class="panel-head"><h2>Your <em>chores</em></h2><span style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn small" data-act="new-once">Add a one-off task</button><button class="btn primary small" data-act="new-chore">Add a chore</button></span></div>
       <p class="muted" style="margin:0;max-width:62ch">Each chore comes back on its own schedule, counted from the day you last ticked it. Tap a chore to change how often, move the next date, or remove it.</p>
       ${groups || `<p class="muted" style="margin:0">No chores yet. <button class="btn small" data-act="starter">Use the starter list</button></p>`}</section>
     ${appearancePanel()}
@@ -647,7 +651,7 @@ function backupPanel() {
 }
 
 /* ---------- sheet: add or edit a chore or a supply ---------- */
-function draftFrom(kind, x) { return kind === "chore" ? { name: x.name, area: x.area, every: x.every, due: x.due, icon: x.icon || "" } : { name: x.name, area: x.area, lasts: x.lasts, bought: x.bought || "", icon: x.icon || "" } }
+function draftFrom(kind, x) { return kind === "chore" ? { name: x.name, area: x.area, every: x.every, due: x.due, once: !!x.once, icon: x.icon || "" } : { name: x.name, area: x.area, lasts: x.lasts, bought: x.bought || "", icon: x.icon || "" } }
 function readForm() {
   const s = state.sheet, f = document.getElementById("itemForm"); if (!s || !f) return;
   const v = id => f.querySelector("#" + id)?.value ?? "";
@@ -655,7 +659,7 @@ function readForm() {
   /* Area is a drop-down of rooms, or a text box while adding a new one. */
   const pick = f.querySelector("#i-area-pick"), fresh = f.querySelector("#i-area-new");
   if (fresh) s.draft.area = fresh.value; else if (pick && pick.value !== "__new") s.draft.area = pick.value;
-  if (s.kind === "chore") { s.draft.every = +v("i-every") || s.draft.every; s.draft.due = v("i-due") || s.draft.due }
+  if (s.kind === "chore") { if (!s.draft.once) s.draft.every = +v("i-every") || s.draft.every; s.draft.due = v("i-due") || s.draft.due }
   else { s.draft.lasts = +v("i-lasts") || s.draft.lasts; s.draft.bought = v("i-bought") }
 }
 function options(list, cur) { const has = list.some(([n]) => n === cur); return (has ? list : [...list, [cur, `Every ${cur} days`]]).map(([n, l]) => `<option value="${n}"${n === cur ? " selected" : ""}>${l}</option>`).join("") }
@@ -667,21 +671,21 @@ function renderSheet(force) {
   if (!force && root.contains(a) && a.matches("input:not([type=checkbox]), select")) return;
   readForm();
   const d = s.draft, chore = s.kind === "chore", preview = { ...d, area: d.area || "Home" };
-  const title = s.id ? d.name || (chore ? "Chore" : "Supply") : chore ? "New chore" : "New supply";
+  const once = chore && d.once, title = s.id ? d.name || (once ? "One-off task" : chore ? "Chore" : "Supply") : once ? "New one-off task" : chore ? "New chore" : "New supply";
   root.innerHTML = `<div class="scrim" data-act="close"></div><aside class="sheet" role="dialog" aria-modal="true" aria-label="${esc(title)}">
-    <div class="sheet-head"><div style="display:grid;gap:4px"><span class="eyebrow">${chore ? "Chore" : "Supply"}</span><h2>${esc(title)}</h2></div><button class="btn small" data-act="close" aria-label="Close">Close</button></div>
+    <div class="sheet-head"><div style="display:grid;gap:4px"><span class="eyebrow">${once ? "One-off task" : chore ? "Chore" : "Supply"}</span><h2>${esc(title)}</h2></div><button class="btn small" data-act="close" aria-label="Close">Close</button></div>
     <form class="sheet-body" id="itemForm">
-      <label class="field">${chore ? "What needs doing" : "What it is"}<input class="input" id="i-name" value="${esc(d.name)}" required placeholder="${chore ? "e.g. Water the balcony plants" : "e.g. Dishwasher pills"}"></label>
+      <label class="field">${chore ? "What needs doing" : "What it is"}<input class="input" id="i-name" value="${esc(d.name)}" required placeholder="${once ? "e.g. Take jeans to the tailor" : chore ? "e.g. Water the balcony plants" : "e.g. Dishwasher pills"}"></label>
       <div class="form-grid">
         ${s.newArea ? `<div class="field" style="grid-column:1/-1"><label for="i-area-new">New area</label><div class="add-line"><input class="input" id="i-area-new" value="${esc(d.area)}" placeholder="e.g. Balcony"><button type="button" class="btn small ghost" data-act="area-list">Back to list</button></div></div>`
           : `<label class="field">Area<select class="input" id="i-area-pick">${[...new Set([...areas(), d.area].filter(Boolean))].map(x => `<option value="${esc(x)}"${x === d.area ? " selected" : ""}>${esc(x)}</option>`).join("")}<option value="__new">New area…</option></select></label>`}
-        ${chore ? `<label class="field">How often<select class="input" id="i-every">${options(FREQS, d.every)}</select></label>
-          <label class="field">Next due<input class="input" type="date" id="i-due" value="${esc(d.due)}"></label>`
+        ${chore ? `${once ? "" : `<label class="field">How often<select class="input" id="i-every">${options(FREQS, d.every)}</select></label>`}
+          <label class="field">${once ? "Do it on" : "Next due"}<input class="input" type="date" id="i-due" value="${esc(d.due)}"></label>`
         : `<label class="field">One usually lasts<select class="input" id="i-lasts">${options(LASTS, d.lasts).replace(/Every (\d+) days/, "About $1 days")}</select></label>
           <label class="field">Last bought<input class="input" type="date" id="i-bought" value="${esc(d.bought)}"></label>`}
       </div>
       <div class="field">Icon<div class="icon-grid" role="group" aria-label="Pick an icon">${iconButtons()}</div></div>
-      <div class="sheet-foot"><button class="btn primary" type="submit">${s.id ? "Save" : chore ? "Add chore" : "Add supply"}</button>
+      <div class="sheet-foot"><button class="btn primary" type="submit">${s.id ? "Save" : once ? "Add task" : chore ? "Add chore" : "Add supply"}</button>
         <span class="spacer"></span>${s.id ? s.confirm ? `<button class="btn small danger" type="button" data-act="remove-yes">Remove</button><button class="btn small ghost" type="button" data-act="remove-no">Keep</button>` : `<button class="btn small ghost" type="button" data-act="remove">Remove</button>` : ""}</div>
     </form></aside>`;
 }
@@ -693,8 +697,8 @@ function iconButtons() {
 }
 /* Rebuild just the icon row (never the whole sheet, so typing and taps aren't interrupted). */
 function refreshIcons() { const g = document.querySelector("#itemForm .icon-grid"); if (g && state.sheet) g.innerHTML = iconButtons() }
-function openSheet(kind, id) {
-  const x = id ? (kind === "chore" ? state.chores : state.supplies)[id] : kind === "chore" ? { name: "", area: "Home", every: 7, due: todayKey() } : { name: "", area: "Home", lasts: 30 };
+function openSheet(kind, id, once) {
+  const x = id ? (kind === "chore" ? state.chores : state.supplies)[id] : kind === "chore" ? { name: "", area: "Home", every: once ? 0 : 7, due: todayKey(), once: !!once } : { name: "", area: "Home", lasts: 30 };
   state.sheet = { kind, id, draft: draftFrom(kind, x) }; render();
   if (!id) document.getElementById("i-name")?.focus();
 }
@@ -704,8 +708,9 @@ function submitSheet() {
   if (!name) { toast(s.kind === "chore" ? "Give the chore a name first." : "Give the supply a name first."); return }
   if (s.kind === "chore") {
     const c = s.id ? { ...state.chores[s.id] } : { id: newId("c"), done: [] };
-    Object.assign(c, { name, area, every: d.every, due: d.due || todayKey() }); d.icon ? c.icon = d.icon : delete c.icon;
-    saveItem("chores", c); toast(s.id ? "Saved." : `Added “${name}”. It's next due ${when(c.due)}.`);
+    Object.assign(c, { name, area, every: d.once ? 0 : d.every, due: d.due || todayKey() }); if (d.once) c.once = true;
+    d.icon ? c.icon = d.icon : delete c.icon;
+    saveItem("chores", c); toast(s.id ? "Saved." : d.once ? `Added “${name}” for ${when(c.due)}.` : `Added “${name}”. It's next due ${when(c.due)}.`);
   } else {
     const x = s.id ? { ...state.supplies[s.id] } : { id: newId("s") };
     if (x.lasts !== d.lasts) delete x.used; /* a value set by hand starts the learning over */
@@ -726,6 +731,7 @@ document.addEventListener("click", e => {
   else if (act === "low") { const s = state.supplies[id]; setLow(id, !s.low); if (!s.low) toast(`Added ${s.name} to your shopping list.`) }
   else if (act === "starter") useStarter();
   else if (act === "new-chore") openSheet("chore");
+  else if (act === "new-once") openSheet("chore", null, true);
   else if (act === "new-supply") openSheet("supply");
   else if (act === "edit-chore") openSheet("chore", id);
   else if (act === "edit-supply") openSheet("supply", id);

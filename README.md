@@ -15,6 +15,7 @@ Plan and tick off household chores, and keep a shopping list of the supplies you
 - **Phone layout:** a bottom tab bar with Today, Week, Chores and Supplies.
 - **Today:** the chores that are due, grouped by area (Kitchen, Bathroom, Laundry, Bedroom, Home), with a checkbox and a "Move to tomorrow" button. Overdue chores say how late they are. A short shopping list sits beside them.
 - **Recurring schedules:** each chore repeats every N days, counted from the day you last ticked it. Unticking puts it back.
+- **One-off tasks:** add something that only needs doing once, like taking jeans to the tailor, with a date. It shows on Today until you tick it and then goes away. Remove a chore or one-off from Chores → tap it → Remove (with Undo).
 - **Week:** seven day cards. Past days show what you ticked, coming days show what's planned.
 - **Chores:** add, edit (name, area, how often, next due date, icon) and remove chores.
 - **Icons:** picked from the name as you type (coffee beans, filters, light bulbs…) or the room, with a few suggestions in the form and the full set under "More icons".
