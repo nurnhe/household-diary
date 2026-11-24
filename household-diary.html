@@ -52,6 +52,11 @@ body { margin: 0; min-height: 100%; color: var(--ink); font: 400 15px/1.55 var(-
   .step { grid-template-columns: 24px 32px minmax(0, 1fr); gap: 9px; padding: 6px 2px }
   .step .thumb { width: 32px !important; height: 32px !important }
   .steps .skip-btn { padding: 5px 6px; font-size: 12px; line-height: 1.25; white-space: normal; width: 74px; text-align: center; border-color: var(--line); background: var(--surface) }
+  .steps .row-acts { flex-direction: column; gap: 4px }
+  .steps .time-btn { width: 74px; padding: 5px 4px; font-size: 12px; white-space: normal; line-height: 1.25 }
+  .steps .time-btn.logged { padding-block: 4px }
+  body .timer-bar { bottom: calc(80px + env(safe-area-inset-bottom, 0px)) }
+  body.has-timer .toast { bottom: calc(134px + env(safe-area-inset-bottom, 0px)) }
 }
 .wrap { max-width: 1200px; margin: 0 auto; padding-block: 28px 56px;
   padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 24px }
@@ -113,6 +118,32 @@ nav.tabs button[aria-selected="true"] { color: var(--accent); border-color: var(
 .tomorrow li { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px; align-items: center; color: var(--muted); font-size: 14px }
 .skip-btn { border: 1px solid transparent; background: none; border-radius: 8px; padding: 3px 9px; font-size: 12.5px; font-weight: 600; color: var(--muted); white-space: nowrap }
 .skip-btn:hover { border-color: var(--line); background: var(--surface); color: var(--accent) }
+/* Time tracking: a Start chip on each chore, which turns into a running clock with Stop */
+.row-acts { display: flex; gap: 4px; align-items: center; justify-content: end }
+.time-btn { display: inline-flex; align-items: center; justify-content: center; gap: 5px; border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 4px 9px; font-size: 12.5px; font-weight: 600; color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums }
+.time-btn svg { width: 11px; height: 11px; flex: none }
+.time-btn:hover { border-color: var(--accent); color: var(--accent) }
+.time-btn.running { background: var(--sun-soft); border-color: color-mix(in srgb, var(--sun) 60%, transparent); color: color-mix(in srgb, var(--sun) 45%, var(--ink)) }
+.time-btn.running b { font-weight: 800 }
+.time-btn.logged { border-color: transparent; background: var(--accent-soft); color: var(--accent) }
+.steps li.timing .step { background: color-mix(in srgb, var(--sun) 9%, transparent) }
+.today-time { font-size: 13px; font-weight: 500; color: var(--muted) }
+.today-time b { color: var(--ink); font-weight: 700 }
+.timer-bar { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(18px + env(safe-area-inset-bottom, 0px)); z-index: 14; display: flex; align-items: center; gap: 10px;
+  max-width: calc(100% - 32px); width: max-content; padding: 6px 6px 6px 14px; border-radius: 12px; background: var(--sun-soft); border: 1px solid color-mix(in srgb, var(--sun) 50%, transparent); box-shadow: var(--shadow); font-size: 14px; font-weight: 600 }
+.timer-bar[hidden] { display: none }
+.timer-bar .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0 }
+.timer-bar .clock { font-variant-numeric: tabular-nums; font-weight: 800; color: color-mix(in srgb, var(--sun) 45%, var(--ink)) }
+.has-timer .toast { bottom: calc(72px + env(safe-area-inset-bottom, 0px)) }
+.chips { display: flex; flex-wrap: wrap; gap: 6px }
+.chips button { border: 1px solid var(--line); background: var(--surface-2); border-radius: 99px; padding: 5px 12px; font-size: 13px; font-weight: 600; color: var(--ink) }
+.chips button:hover { border-color: var(--accent); color: var(--accent) }
+.time-stats { display: grid; gap: 8px; padding: 12px 14px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--line); font-size: 14px; font-weight: 500; color: var(--ink) }
+.time-stats .nums { display: flex; flex-wrap: wrap; gap: 4px 18px }
+.time-stats .nums b { font-family: var(--serif); font-size: 22px; font-weight: 500; display: block; line-height: 1.1 }
+.time-stats .nums span { font-size: 12px; color: var(--muted); font-weight: 600 }
+.time-stats ol { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 12.5px; color: var(--muted) }
+.day-head .mins { font-size: 11.5px; font-weight: 600; color: var(--muted); margin-left: auto; font-variant-numeric: tabular-nums }
 .thumb { display: inline-grid; place-items: center; border-radius: 10px; flex: none; background: var(--surface) }
 .thumb.icon { background: color-mix(in srgb, var(--c) 18%, var(--surface)) }
 .thumb.icon svg { width: 58%; height: 58%; color: color-mix(in srgb, var(--c) 75%, var(--ink)) }
@@ -253,6 +284,7 @@ nav.tabs button[aria-selected="true"] { color: var(--accent); border-color: var(
   <button data-act="tab" data-tab="supplies"><svg viewBox="0 0 24 24" aria-hidden="true" data-nav="supplies"></svg><span>Supplies</span></button>
 </nav>
 <div id="sheetRoot"></div>
+<div class="timer-bar" id="timerBar" hidden></div>
 <div class="toast" id="toast" hidden></div>
 
 <script>
@@ -394,14 +426,82 @@ function dueOn(c, k) {
 }
 function todayList() { return chores().filter(c => isDue(c) || doneToday(c)) }
 function tick(id) {
-  const c = { ...state.chores[id] }, t = todayKey(), done = (c.done || []).filter(k => k !== t);
-  if (c.once) { if (c.finished === t) delete c.finished; else { c.finished = t; done.push(t) } c.done = done; saveItem("chores", c); return }
-  if (doneToday(c)) { c.due = c.prevDue || t; delete c.prevDue }
-  else { c.prevDue = c.due; c.due = keyAdd(t, c.every); done.push(t) }
-  c.done = done.slice(-40); saveItem("chores", c);
+  const prev = state.chores[id], c = stopped(prev), t = todayKey(), done = (c.done || []).filter(k => k !== t);
+  /* Ticking a chore whose timer is running stops the timer and keeps the time. */
+  const timed = prev.timer && !doneToday(prev) ? minsOn(c, t) : 0;
+  if (c.once) { if (c.finished === t) delete c.finished; else { c.finished = t; done.push(t) } c.done = done; saveItem("chores", c) }
+  else {
+    if (doneToday(c)) { c.due = c.prevDue || t; delete c.prevDue }
+    else { c.prevDue = c.due; c.due = keyAdd(t, c.every); done.push(t) }
+    c.done = done.slice(-40); saveItem("chores", c);
+  }
+  if (timed) toast(`Done in ${fmtMin(timed)}. Nice.`, () => saveItem("chores", prev));
 }
 function sooner(id) { const prev = state.chores[id], c = { ...prev, due: todayKey() }; saveItem("chores", c); toast(`Moved “${c.name}” back to today.`, () => saveItem("chores", prev)) }
 function later(id) { const prev = state.chores[id], c = { ...prev, due: keyAdd(todayKey(), 1) }; saveItem("chores", c); toast(`Moved “${c.name}” to tomorrow.`, () => saveItem("chores", prev)) }
+/* ---------- time tracking ----------
+   A chore keeps the minutes it took on each day it was timed (mins: { "2026-11-24": 14 }, the last 30 such days).
+   While its timer runs it also keeps the moment it started (timer: milliseconds), so the timer carries on when the app is
+   closed or the phone is locked. One timer runs at a time: starting another pauses the first and keeps its minutes.
+   Stopping adds to today's minutes, so a chore done in two goes adds up. */
+const fmtMin = m => m < 60 ? `${m} min` : `${Math.floor(m / 60)} h${m % 60 ? ` ${m % 60} min` : ""}`;
+const fmtClock = ms => { const s = Math.max(0, Math.floor(ms / 1000)), h = Math.floor(s / 3600), m = Math.floor(s / 60) % 60, p = n => String(n).padStart(2, "0"); return h ? `${h}:${p(m)}:${p(s % 60)}` : `${m}:${p(s % 60)}` };
+const minsOn = (c, k) => +c.mins?.[k] || 0;
+const timeLog = c => Object.entries(c.mins || {}).filter(([, m]) => +m > 0).sort(([a], [b]) => a.localeCompare(b));
+const lastTime = c => timeLog(c).at(-1);
+/* The average of the last 10 times, so it follows you as you get quicker. */
+const avgMin = c => { const l = timeLog(c).slice(-10); return l.length ? Math.round(l.reduce((n, [, m]) => n + +m, 0) / l.length) : 0 };
+const runningChore = () => Object.values(state.chores).find(c => c.timer);
+const runMs = c => Date.now() - c.timer;
+function withMins(c, k, m) {
+  const mins = { ...(c.mins || {}) };
+  if (m > 0) mins[k] = m; else delete mins[k];
+  const keys = Object.keys(mins).sort(); keys.slice(0, -30).forEach(x => delete mins[x]);
+  if (Object.keys(mins).length) c.mins = mins; else delete c.mins;
+  return c;
+}
+/* A copy of the chore with its timer stopped and the time added to today. Under 20 seconds counts as a mis-tap. */
+function stopped(prev) {
+  const c = { ...prev }; if (!c.timer) return c;
+  const ms = runMs(c); delete c.timer;
+  return ms < 20000 ? c : withMins(c, todayKey(), minsOn(c, todayKey()) + Math.max(1, Math.round(ms / 60000)));
+}
+function startTimer(id) {
+  const other = runningChore(), c = state.chores[id];
+  if (other && other.id !== id) saveItem("chores", stopped(other));
+  saveItem("chores", { ...c, timer: Date.now() });
+  toast(other && other.id !== id ? `Paused “${other.name}” and started “${c.name}”.` : `Timing “${c.name}”. It keeps going if you close the app.`);
+}
+function stopTimer(id) {
+  const prev = state.chores[id]; if (!prev?.timer) return;
+  const ms = runMs(prev), c = stopped(prev), m = Math.round(ms / 60000);
+  saveItem("chores", c);
+  if (ms < 20000) toast("Timer stopped. Under 20 seconds isn't logged.", () => saveItem("chores", prev));
+  /* A very long run usually means the timer was left on, so ask before trusting it. */
+  else if (m > 180) openTimeSheet(id, `The timer ran for ${fmtMin(m)}. If it was left running, put in how long it really took.`);
+  else toast(`Logged ${fmtMin(Math.max(1, m))} for “${c.name}”.${doneToday(c) ? "" : " Tick it off when it's done."}`, () => saveItem("chores", prev));
+}
+function openTimeSheet(id, note) {
+  const c = state.chores[id]; state.sheet = { kind: "time", id, note, draft: { min: minsOn(c, todayKey()) || "" } }; render();
+}
+function saveTime() {
+  const s = state.sheet, prev = state.chores[s.id], v = document.getElementById("t-min")?.value.trim() ?? "";
+  const m = v === "" ? 0 : Math.round(+v);
+  if (!(m >= 0 && m <= 24 * 60)) { toast("Put in the minutes as a number, like 15."); return }
+  const c = withMins({ ...prev }, todayKey(), m); delete c.timer;
+  state.sheet = null; saveItem("chores", c);
+  toast(m ? `Saved ${fmtMin(m)} for “${c.name}” today.` : `Cleared today's time for “${c.name}”.`, () => saveItem("chores", prev));
+}
+/* Keep the running clocks ticking without re-rendering the page. */
+setInterval(() => document.querySelectorAll("[data-since]").forEach(el => el.textContent = fmtClock(Date.now() - +el.dataset.since)), 1000);
+const timeBtn = c => c.timer
+  ? `<button class="time-btn running" data-act="timer-stop" data-id="${c.id}" aria-label="Stop the timer for ${esc(c.name)}">Stop <b data-since="${c.timer}">${fmtClock(runMs(c))}</b></button>`
+  : `<button class="time-btn" data-act="timer-start" data-id="${c.id}" aria-label="Start a timer for ${esc(c.name)}"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 1.8v8.4L10 6z" fill="currentColor"/></svg>Start</button>`;
+function renderTimerBar() {
+  const bar = document.getElementById("timerBar"), c = runningChore(), show = !!c && (state.tab !== "today" || !todayList().some(x => x.id === c.id));
+  document.body.classList.toggle("has-timer", show); bar.hidden = !show; if (!show) { bar.innerHTML = ""; return }
+  bar.innerHTML = `<span class="nm">${esc(c.name)}</span><span class="clock" data-since="${c.timer}">${fmtClock(runMs(c))}</span><button class="btn small" data-act="timer-stop" data-id="${c.id}">Stop</button>`;
+}
 /* Starter chores are spread out so the first day isn't everything at once. */
 function staggered(list) {
   const t = todayKey(), seen = {}, total = {};
@@ -525,6 +625,7 @@ function render() {
   else if (tab === "week") main.innerHTML = renderWeek();
   else if (tab === "chores") main.innerHTML = renderChores();
   else main.innerHTML = renderSupplies();
+  renderTimerBar();
   renderSheet();
 }
 function emptyState() {
@@ -533,14 +634,18 @@ function emptyState() {
 }
 function choreRow(c) {
   const d = doneToday(c), late = !d && lateBy(c) > 0;
-  const sub = c.once ? (d ? "Done" : late ? `<span class="late">${lateBy(c) === 1 ? "Since yesterday" : `${lateBy(c)} days overdue`}</span> · one-off` : "One-off") : d ? `Done · next ${when(c.due)}` : late ? `<span class="late">${lateBy(c) === 1 ? "Since yesterday" : `${lateBy(c)} days overdue`}</span> · ${freqLabel(c.every).toLowerCase()}` : freqLabel(c.every);
-  return `<li class="${d ? "done" : ""}"><label class="step">
+  const tm = minsOn(c, todayKey()), avg = avgMin(c), usual = !d && avg ? ` · about ${fmtMin(avg)}` : "";
+  const sub = c.timer ? `Timing now${tm ? ` · ${fmtMin(tm)} so far` : ""}${avg ? ` · usually ${fmtMin(avg)}` : ""}` : c.once ? (d ? "Done" : late ? `<span class="late">${lateBy(c) === 1 ? "Since yesterday" : `${lateBy(c)} days overdue`}</span> · one-off${usual}` : "One-off" + usual) : d ? `Done · next ${when(c.due)}` : late ? `<span class="late">${lateBy(c) === 1 ? "Since yesterday" : `${lateBy(c)} days overdue`}</span> · ${freqLabel(c.every).toLowerCase()}${usual}` : freqLabel(c.every) + usual;
+  return `<li class="${d ? "done" : ""}${c.timer ? " timing" : ""}"><label class="step">
     <input type="checkbox" data-act="tick" data-id="${c.id}"${d ? " checked" : ""} aria-label="${esc(c.name)}">
     ${thumb(c, "chore", 40)}<span class="txt"><span class="nm">${esc(c.name)}</span><span class="sub">${sub}</span></span></label>
-    ${d ? "" : `<button class="skip-btn" data-act="later" data-id="${c.id}" title="Move this chore to tomorrow">Move to tomorrow</button>`}</li>`;
+    <span class="row-acts">${d ? `<button class="time-btn${tm ? " logged" : ""}" data-act="time-edit" data-id="${c.id}" aria-label="${tm ? `Change the time for ${esc(c.name)}` : `Add how long ${esc(c.name)} took`}">${tm ? fmtMin(tm) : "Add time"}</button>`
+      : `${timeBtn(c)}${c.timer ? "" : `<button class="skip-btn" data-act="later" data-id="${c.id}" title="Move this chore to tomorrow">Move to tomorrow</button>`}`}</span></li>`;
 }
 function renderToday() {
   const k = todayKey(), d = fromKey(k), list = todayList(), doneN = list.filter(doneToday).length;
+  const spent = Object.values(state.chores).reduce((n, c) => n + minsOn(c, k), 0), left = list.filter(c => !doneToday(c)).reduce((n, c) => n + avgMin(c), 0);
+  const timeLine = spent || left ? `<span class="today-time">${spent ? `<b>${fmtMin(spent)}</b> on chores today` : ""}${spent && left ? " · " : ""}${left ? `about ${fmtMin(left)} left` : ""}</span>` : "";
   const groups = byArea(list).map(([area, cs]) => `<div class="area" style="--c:var(--s${tintOf(area)})">
     <div class="area-head"><h3>${esc(area)}</h3><span class="count">${cs.filter(doneToday).length} of ${cs.length}</span></div>
     <ol class="steps">${cs.map(choreRow).join("")}</ol></div>`).join("");
@@ -558,7 +663,7 @@ function renderToday() {
       <div style="display:grid;gap:6px"><span class="eyebrow">Today</span>
         <div class="date">${DOW[d.getDay()]}<br><em>${d.toLocaleDateString(undefined, { day: "numeric", month: "long" })}</em></div></div>
       ${list.length ? `<div class="progress">${doneN === list.length ? `<span class="complete-badge">✓ All done for today</span>` : `<span>${doneN} of ${list.length} done</span>`}
-        <div class="bar" style="width:min(220px,100%)"><span style="width:${doneN / list.length * 100}%"></span></div></div>` : ""}
+        <div class="bar" style="width:min(220px,100%)"><span style="width:${doneN / list.length * 100}%"></span></div>${timeLine}</div>` : timeLine}
       ${lowCard}
     </div>
     ${list.length ? `<div class="areas">${groups}</div>` : `<div class="all-done"><h3>Nothing due today</h3><p class="muted">${next ? `Next up: ${esc(next.name)}, ${when(next.due)}.` : "Add a chore to get started."}</p></div>`}
@@ -578,7 +683,7 @@ function renderWeek() {
       return `<li class="${dn ? "done" : ""}">${miniIcon(c, "chore")}<span>${esc(c.name)}</span>${dn ? `<span class="tick" aria-label="done">✓</span>` : late ? `<span class="tick late" aria-label="overdue">!</span>` : ""}</li>` }).join("")}</ol>`
       : `<div class="empty">${past ? "Nothing ticked" : "Nothing due"}</div>`;
     cells += `<div class="glass day${k === tk ? " is-today" : past ? " is-past" : ""}${allDone && !past ? " is-complete" : ""}">
-      <div class="day-head"><span class="dow">${DOW[d.getDay()].slice(0, 3)}</span><span class="num">${d.getDate()}</span></div>
+      <div class="day-head"><span class="dow">${DOW[d.getDay()].slice(0, 3)}</span><span class="num">${d.getDate()}</span>${(m => m ? `<span class="mins" title="Time on chores">${fmtMin(m)}</span>` : "")(k <= tk ? Object.values(state.chores).reduce((n, c) => n + minsOn(c, k), 0) : 0)}</div>
       ${allDone && !past ? `<span class="complete-badge small">✓ All done</span>` : ""}${items}</div>`;
   }
   const used = [...new Set(chores().map(c => c.area))];
@@ -594,7 +699,7 @@ function renderWeek() {
 function renderChores() {
   const groups = byArea(chores()).map(([area, cs]) => `<div class="group"><span class="eyebrow"><span class="dot" style="--c:var(--s${tintOf(area)})"></span>${esc(area)}</span>
     ${cs.map(c => `<div class="row"><button class="row-main" data-act="edit-chore" data-id="${c.id}" aria-label="Edit ${esc(c.name)}">${thumb(c, "chore", 48)}
-      <span style="min-width:0"><span class="nm" style="display:block">${esc(c.name)}</span><span class="meta">${freqLabel(c.every)} · ${doneToday(c) ? "done today" : isDue(c) ? "due today" : (c.once ? "due " : "next ") + when(c.due)}</span></span></button></div>`).join("")}</div>`).join("");
+      <span style="min-width:0"><span class="nm" style="display:block">${esc(c.name)}</span><span class="meta">${freqLabel(c.every)} · ${doneToday(c) ? "done today" : isDue(c) ? "due today" : (c.once ? "due " : "next ") + when(c.due)}${avgMin(c) ? ` · about ${fmtMin(avgMin(c))}` : ""}</span></span></button></div>`).join("")}</div>`).join("");
   return `<section class="glass panel"><div class="panel-head"><h2>Your <em>chores</em></h2><span style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn small" data-act="new-once">Add a one-off task</button><button class="btn primary small" data-act="new-chore">Add a chore</button></span></div>
       <p class="muted" style="margin:0;max-width:62ch">Each chore comes back on its own schedule, counted from the day you last ticked it. Tap a chore to change how often, move the next date, or remove it.</p>
       ${groups || `<p class="muted" style="margin:0">No chores yet. <button class="btn small" data-act="starter">Use the starter list</button></p>`}</section>
@@ -635,7 +740,7 @@ function backupPanel() {
 /* ---------- sheet: add or edit a chore or a supply ---------- */
 function draftFrom(kind, x) { return kind === "chore" ? { name: x.name, area: x.area, every: x.every, due: x.due, once: !!x.once, icon: x.icon || "" } : { name: x.name, area: x.area, lasts: x.lasts, bought: x.bought || "", icon: x.icon || "" } }
 function readForm() {
-  const s = state.sheet, f = document.getElementById("itemForm"); if (!s || !f) return;
+  const s = state.sheet, f = document.getElementById("itemForm"); if (!s || !f || s.kind === "time") return;
   const v = id => f.querySelector("#" + id)?.value ?? "";
   s.draft.name = v("i-name");
   /* Area is a drop-down of rooms, or a text box while adding a new one. */
@@ -651,6 +756,7 @@ function renderSheet(force) {
   if (!s) { root.innerHTML = ""; return }
   const a = document.activeElement;
   if (!force && root.contains(a) && a.matches("input:not([type=checkbox]), select")) return;
+  if (s.kind === "time") { root.innerHTML = timeSheet(); return }
   readForm();
   const d = s.draft, chore = s.kind === "chore", preview = { ...d, area: d.area || "Home" };
   const once = chore && d.once, title = s.id ? d.name || (once ? "One-off task" : chore ? "Chore" : "Supply") : once ? "New one-off task" : chore ? "New chore" : "New supply";
@@ -667,8 +773,30 @@ function renderSheet(force) {
           <label class="field">Last bought<input class="input" type="date" id="i-bought" value="${esc(d.bought)}"></label>`}
       </div>
       <div class="field">Icon<div class="icon-grid" role="group" aria-label="Pick an icon">${iconButtons()}</div></div>
+      ${chore && s.id ? timeStats(state.chores[s.id]) : ""}
       <div class="sheet-foot"><button class="btn primary" type="submit">${s.id ? "Save" : once ? "Add task" : chore ? "Add chore" : "Add supply"}</button>
         <span class="spacer"></span>${s.id ? s.confirm ? `<button class="btn small danger" type="button" data-act="remove-yes">Remove</button><button class="btn small ghost" type="button" data-act="remove-no">Keep</button>` : `<button class="btn small ghost" type="button" data-act="remove">Remove</button>` : ""}</div>
+    </form></aside>`;
+}
+/* How long a chore takes, for its edit sheet. */
+function timeStats(c) {
+  const log = timeLog(c || {}); if (!log.length) return `<div class="field">Time it takes<p class="muted" style="margin:0;font-weight:400">Not timed yet. Tap Start on Today when you begin, or add the minutes after you tick it off.</p></div>`;
+  const [lk, lm] = lastTime(c);
+  return `<div class="field">Time it takes<div class="time-stats"><div class="nums"><div><b>${fmtMin(avgMin(c))}</b><span>${log.length === 1 ? "from 1 time" : `average of ${Math.min(10, log.length)} times`}</span></div><div><b>${fmtMin(+lm)}</b><span>last time, ${lk === todayKey() ? "today" : short(lk)}</span></div></div>
+    ${log.length > 1 ? `<ol aria-label="Recent times">${log.slice(-6).reverse().map(([k, m]) => `<li>${short(k)}: ${fmtMin(+m)}</li>`).join("")}</ol>` : ""}</div></div>`;
+}
+/* A small sheet to put in, or correct, how long a chore took today. */
+function timeSheet() {
+  const s = state.sheet, c = state.chores[s.id]; if (!c) { state.sheet = null; return "" }
+  const avg = avgMin(c), cur = minsOn(c, todayKey());
+  return `<div class="scrim" data-act="close"></div><aside class="sheet" role="dialog" aria-modal="true" aria-label="How long it took">
+    <div class="sheet-head"><div style="display:grid;gap:4px"><span class="eyebrow">How long it took today</span><h2>${esc(c.name)}</h2></div><button class="btn small" data-act="close" aria-label="Close">Close</button></div>
+    <form class="sheet-body" id="timeForm">
+      ${s.note ? `<p class="hint" style="grid-template-columns:1fr;margin:0">${esc(s.note)}</p>` : ""}
+      <label class="field">Minutes<input class="input" id="t-min" type="number" inputmode="numeric" min="0" max="1440" step="1" value="${esc(s.draft.min)}" placeholder="${avg ? `usually ${avg}` : "e.g. 15"}"></label>
+      <div class="chips" role="group" aria-label="Quick picks">${[5, 10, 15, 20, 30, 45, 60, 90].map(m => `<button type="button" data-act="time-pick" data-min="${m}">${fmtMin(m)}</button>`).join("")}</div>
+      ${avg ? `<p class="muted" style="margin:0;font-size:13px">It usually takes about ${fmtMin(avg)}.</p>` : ""}
+      <div class="sheet-foot"><button class="btn primary" type="submit">Save time</button><span class="spacer"></span>${cur ? `<button class="btn small ghost" type="button" data-act="time-clear">Clear today's time</button>` : ""}</div>
     </form></aside>`;
 }
 function iconButtons() {
@@ -710,6 +838,11 @@ document.addEventListener("click", e => {
   else if (act === "week") { const n = +el.dataset.n; state.weekStart = n ? addDays(state.weekStart, 7 * n) : mondayOf(new Date()); render() }
   else if (act === "later") later(id);
   else if (act === "sooner") sooner(id);
+  else if (act === "timer-start") startTimer(id);
+  else if (act === "timer-stop") stopTimer(id);
+  else if (act === "time-edit") openTimeSheet(id);
+  else if (act === "time-pick") { const i = document.getElementById("t-min"); if (i) { i.value = el.dataset.min; state.sheet.draft.min = el.dataset.min } }
+  else if (act === "time-clear") { document.getElementById("t-min").value = ""; saveTime() }
   else if (act === "low") { const s = state.supplies[id]; setLow(id, !s.low); if (!s.low) toast(`Added ${s.name} to your shopping list.`) }
   else if (act === "starter") useStarter();
   else if (act === "new-chore") openSheet("chore");
@@ -747,6 +880,7 @@ document.addEventListener("keydown", e => { if (e.key === "Escape" && state.shee
 document.addEventListener("submit", e => {
   e.preventDefault();
   if (e.target.id === "itemForm") { document.activeElement?.blur(); submitSheet() }
+  else if (e.target.id === "timeForm") { document.activeElement?.blur(); saveTime() }
   else if (e.target.id === "extraForm") {
     const inp = document.getElementById("extra-name"), name = inp.value.trim(); if (!name) return;
     inp.value = ""; inp.blur(); const x = { id: newId("x"), name, added: Date.now() }; saveItem("shopping", x); toast(`Added ${name} to your shopping list.`);

@@ -16,6 +16,7 @@ Plan and tick off household chores, and keep a shopping list of the supplies you
 - **Today:** the chores that are due, grouped by area (Kitchen, Bathroom, Laundry, Bedroom, Home), with a checkbox and a "Move to tomorrow" button. Overdue chores say how late they are. A short shopping list sits beside them.
 - **Recurring schedules:** each chore repeats every N days, counted from the day you last ticked it. Unticking puts it back.
 - **One-off tasks:** add something that only needs doing once, like taking jeans to the tailor, with a date. It shows on Today until you tick it and then goes away. Remove a chore or one-off from Chores → tap it → Remove (with Undo).
+- **Time tracker:** tap Start on a chore when you begin and Stop (or tick it off) when you finish. One timer runs at a time, and it keeps going if you close the app. If you forgot to time it, tick it off and tap Add time. Today shows the time spent and roughly how long is left, each chore shows how long it usually takes, and tapping a chore under Chores shows its last time and average.
 - **Week:** seven day cards. Past days show what you ticked, coming days show what's planned.
 - **Chores:** add, edit (name, area, how often, next due date, icon) and remove chores.
 - **Icons:** picked from the name as you type (coffee beans, filters, light bulbs…) or the room, with a few suggestions in the form and the full set under "More icons".
